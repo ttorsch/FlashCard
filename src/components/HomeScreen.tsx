@@ -49,7 +49,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   const featuredPhrase = phrases[0] || {
     english: 'Paddle with your chest up!',
     thaiMeaning: 'พายโดยยกหน้าอกขึ้นจากบอร์ด!',
-    thaiPhonetic: '"พัด-เดิล วิธ ยัวร์ เชสท์ อัพ!"'
+    thaiPhonetic: 'พัด-เดิล วิธ ยัวร์ เชสท์ อัพ!'
   };
 
   return (
@@ -175,7 +175,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           <h4 className="text-base font-bold text-[#0B1F3B]">
             "{featuredPhrase.english}"
           </h4>
-          <p className="text-xs font-semibold text-[#EB6F43] font-mono mt-0.5">
+          <p className="text-sm font-extralight text-[#EB6F43] font-thai-phonetic tracking-wide mt-0.5">
             {featuredPhrase.thaiPhonetic}
           </p>
           <p className="text-xs text-[#0B1F3B]/70 font-medium mt-1">

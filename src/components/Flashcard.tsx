@@ -257,7 +257,7 @@ export const Flashcard: React.FC<FlashcardProps> = ({
               {card.thaiPhonetic && (
                 <div className="border-t border-white/14 pt-3 flex flex-col gap-1">
                   <span className="lb-micro text-white/50">THAI PHONETIC</span>
-                  <p className="text-base sm:text-lg font-semibold text-white">
+                  <p className="text-base sm:text-lg font-extralight text-white font-thai-phonetic tracking-wide">
                     {card.thaiPhonetic}
                   </p>
                 </div>

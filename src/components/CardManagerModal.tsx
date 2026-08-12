@@ -589,7 +589,7 @@ export const CardManagerModal: React.FC<CardManagerModalProps> = ({
                             </span>
                           </div>
                           {phrase.thaiPhonetic && (
-                            <p className="text-xs font-semibold text-[#EB6F43] font-mono truncate">{phrase.thaiPhonetic}</p>
+                            <p className="text-sm font-semibold text-[#EB6F43] font-thai-phonetic tracking-wide truncate">{phrase.thaiPhonetic}</p>
                           )}
                           <p className="text-xs text-[#0B1F3B] font-bold truncate mt-0.5">{phrase.thaiMeaning}</p>
                         </div>

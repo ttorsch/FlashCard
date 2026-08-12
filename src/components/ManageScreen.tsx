@@ -26,13 +26,10 @@ export const ManageScreen: React.FC<ManageScreenProps> = ({
   const [manageMode, setManageMode] = useState<'vocab' | 'phrases'>('vocab');
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [query, setQuery] = useState('');
-  const [expandedItemIds, setExpandedItemIds] = useState<Record<string, boolean>>({});
+  const [expandedItemId, setExpandedItemId] = useState<string | null>(null);
 
   const toggleItemExpanded = (id: string) => {
-    setExpandedItemIds((prev) => ({
-      ...prev,
-      [id]: !prev[id]
-    }));
+    setExpandedItemId((prev) => (prev === id ? null : id));
   };
 
   // Unique categories list for pill filter bar
@@ -132,6 +129,7 @@ export const ManageScreen: React.FC<ManageScreenProps> = ({
             setManageMode('vocab');
             setSelectedCategory('All');
             setQuery('');
+            setExpandedItemId(null);
           }}
           className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
             manageMode === 'vocab'
@@ -148,6 +146,7 @@ export const ManageScreen: React.FC<ManageScreenProps> = ({
             setManageMode('phrases');
             setSelectedCategory('All');
             setQuery('');
+            setExpandedItemId(null);
           }}
           className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
             manageMode === 'phrases'
@@ -166,7 +165,10 @@ export const ManageScreen: React.FC<ManageScreenProps> = ({
         <input
           type="text"
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
+          onChange={(e) => {
+            setQuery(e.target.value);
+            setExpandedItemId(null);
+          }}
           placeholder="Search English or Thai"
           className="w-full pl-11 pr-4 py-3 bg-[#EBE5DF]/60 rounded-2xl text-[#0B1F3B] placeholder-[#0B1F3B]/40 text-xs font-semibold focus:outline-none focus:bg-white focus:ring-2 focus:ring-[#EB6F43]/30 transition-all"
         />
@@ -179,7 +181,10 @@ export const ManageScreen: React.FC<ManageScreenProps> = ({
           return (
             <button
               key={cat}
-              onClick={() => setSelectedCategory(cat)}
+              onClick={() => {
+                setSelectedCategory(cat);
+                setExpandedItemId(null);
+              }}
               className={`px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all cursor-pointer shrink-0 ${
                 isActive
                   ? 'bg-[#EB6F43] text-white shadow-sm'
@@ -198,7 +203,7 @@ export const ManageScreen: React.FC<ManageScreenProps> = ({
         className="w-full py-3.5 px-4 rounded-full bg-[#EB6F43] hover:bg-[#D85F35] text-white font-bold text-sm shadow-md shadow-[#EB6F43]/20 flex items-center justify-center gap-2 active-push transition-all cursor-pointer"
       >
         <Plus className="w-4 h-4 text-white" />
-        <span>{manageMode === 'vocab' ? '+ เพิ่มการ์ดใหม่' : '+ เพิ่มประโยคใหม่'}</span>
+        <span>{manageMode === 'vocab' ? 'เพิ่มการ์ดใหม่' : 'เพิ่มประโยคใหม่'}</span>
       </button>
 
       {/* SECTION 1: VOCABULARY GROUPS */}
@@ -206,7 +211,7 @@ export const ManageScreen: React.FC<ManageScreenProps> = ({
         <div className="flex flex-col gap-6 mt-1">
           {groupedCards.map((group) => (
             <div key={group.categoryName} className="flex flex-col gap-2">
-              {/* Category Group Header matching reference design */}
+              {/* Category Group Header */}
               <div className="flex items-center justify-between px-1">
                 <span className="text-[11px] font-black uppercase tracking-wider text-[#0B1F3B]/60">
                   {group.categoryName}
@@ -219,12 +224,12 @@ export const ManageScreen: React.FC<ManageScreenProps> = ({
               {/* Group Container Box */}
               <div className="bg-white rounded-3xl border border-[#0B1F3B]/10 shadow-xs divide-y divide-[#0B1F3B]/8 overflow-hidden">
                 {group.items.map((card) => {
-                  const isExpanded = !!expandedItemIds[card.id];
+                  const isExpanded = expandedItemId === card.id;
                   const isLearned = masteredIds.includes(card.id);
 
                   return (
                     <div key={card.id} className="p-4 flex flex-col gap-2.5">
-                      {/* Row Main Header */}
+                      {/* Collapsed View: English & Thai Pronunciation only */}
                       <div
                         onClick={() => toggleItemExpanded(card.id)}
                         className="flex items-start justify-between gap-3 cursor-pointer group"
@@ -234,13 +239,8 @@ export const ManageScreen: React.FC<ManageScreenProps> = ({
                             {card.english}
                           </h4>
                           {card.thaiPhonetic && (
-                            <p className="text-xs font-semibold text-[#EB6F43] font-mono">
+                            <p className="text-sm font-extralight text-[#EB6F43] font-thai-phonetic tracking-wide">
                               {card.thaiPhonetic}
-                            </p>
-                          )}
-                          {!isExpanded && (
-                            <p className="text-xs text-[#0B1F3B]/70 font-medium truncate mt-0.5">
-                              {card.thaiMeaning}
                             </p>
                           )}
                         </div>
@@ -259,7 +259,7 @@ export const ManageScreen: React.FC<ManageScreenProps> = ({
                         </div>
                       </div>
 
-                      {/* Expanded Content View */}
+                      {/* Expanded View: Thai Meaning & Example */}
                       {isExpanded && (
                         <div className="pt-1 flex flex-col gap-2.5 animate-fadeIn">
                           <p className="text-xs text-[#0B1F3B]/80 font-medium leading-relaxed">
@@ -272,13 +272,7 @@ export const ManageScreen: React.FC<ManageScreenProps> = ({
                             </div>
                           )}
 
-                          {card.surfTip && (
-                            <div className="text-[11px] font-semibold text-[#EB6F43]">
-                              💡 {card.surfTip}
-                            </div>
-                          )}
-
-                          {/* Action Pill Buttons */}
+                          {/* Action Pill Button */}
                           <div className="flex items-center gap-2 pt-1">
                             <button
                               onClick={(e) => {
@@ -313,7 +307,7 @@ export const ManageScreen: React.FC<ManageScreenProps> = ({
         <div className="flex flex-col gap-6 mt-1">
           {groupedPhrases.map((group) => (
             <div key={group.categoryName} className="flex flex-col gap-2">
-              {/* Category Group Header matching reference design */}
+              {/* Category Group Header */}
               <div className="flex items-center justify-between px-1">
                 <span className="text-[11px] font-black uppercase tracking-wider text-[#0B1F3B]/60">
                   {group.categoryName}
@@ -326,12 +320,12 @@ export const ManageScreen: React.FC<ManageScreenProps> = ({
               {/* Group Container Box */}
               <div className="bg-white rounded-3xl border border-[#0B1F3B]/10 shadow-xs divide-y divide-[#0B1F3B]/8 overflow-hidden">
                 {group.items.map((phrase) => {
-                  const isExpanded = !!expandedItemIds[phrase.id];
+                  const isExpanded = expandedItemId === phrase.id;
                   const isLearned = masteredIds.includes(phrase.id);
 
                   return (
                     <div key={phrase.id} className="p-4 flex flex-col gap-2.5">
-                      {/* Row Main Header */}
+                      {/* Collapsed View: English & Thai Pronunciation only */}
                       <div
                         onClick={() => toggleItemExpanded(phrase.id)}
                         className="flex items-start justify-between gap-3 cursor-pointer group"
@@ -341,13 +335,8 @@ export const ManageScreen: React.FC<ManageScreenProps> = ({
                             {phrase.english}
                           </h4>
                           {phrase.thaiPhonetic && (
-                            <p className="text-xs font-semibold text-[#EB6F43] font-mono">
+                            <p className="text-sm font-extralight text-[#EB6F43] font-thai-phonetic tracking-wide">
                               {phrase.thaiPhonetic}
-                            </p>
-                          )}
-                          {!isExpanded && (
-                            <p className="text-xs text-[#0B1F3B]/70 font-medium truncate mt-0.5">
-                              {phrase.thaiMeaning}
                             </p>
                           )}
                         </div>
@@ -366,20 +355,14 @@ export const ManageScreen: React.FC<ManageScreenProps> = ({
                         </div>
                       </div>
 
-                      {/* Expanded Content View */}
+                      {/* Expanded View: Thai Meaning & Edit Button */}
                       {isExpanded && (
                         <div className="pt-1 flex flex-col gap-2.5 animate-fadeIn">
                           <p className="text-xs text-[#0B1F3B]/80 font-medium leading-relaxed">
                             {phrase.thaiMeaning}
                           </p>
 
-                          {phrase.context && (
-                            <div className="text-[11px] font-semibold text-[#EB6F43]">
-                              💡 {phrase.context}
-                            </div>
-                          )}
-
-                          {/* Action Pill Buttons */}
+                          {/* Action Pill Button */}
                           <div className="flex items-center gap-2 pt-1">
                             <button
                               onClick={(e) => {

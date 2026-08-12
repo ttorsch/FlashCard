@@ -363,7 +363,7 @@ export const PhrasesScreen: React.FC<PhrasesScreenProps> = ({
                     {currentPhrase.thaiPhonetic && (
                       <div className="border-t border-white/14 pt-3 flex flex-col gap-1">
                         <span className="lb-micro text-[#EB6F43] font-bold">THAI PHONETIC (คำอ่านออกเสียง)</span>
-                        <p className="text-base sm:text-lg font-semibold text-white font-mono">
+                        <p className="text-base sm:text-lg font-extralight text-white font-thai-phonetic tracking-wide">
                           {currentPhrase.thaiPhonetic}
                         </p>
                       </div>

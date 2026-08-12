@@ -53,6 +53,8 @@ export function App() {
     try {
       localStorage.removeItem('surf_flashcard_custom_vocabulary');
       localStorage.removeItem('surf_flashcard_categories');
+      localStorage.removeItem('surf_flashcard_v2_vocabulary');
+      localStorage.removeItem('surf_flashcard_v2_phrases');
     } catch {
       // Ignore storage errors
     }
@@ -61,7 +63,7 @@ export function App() {
   // Vocabulary State
   const [vocabulary, setVocabulary] = useState<SurfVocabulary[]>(() => {
     try {
-      const saved = localStorage.getItem('surf_flashcard_v2_vocabulary');
+      const saved = localStorage.getItem('surf_flashcard_v3_vocabulary');
       return saved ? JSON.parse(saved) : SURF_VOCABULARY;
     } catch {
       return SURF_VOCABULARY;
@@ -70,7 +72,7 @@ export function App() {
 
   const [categories, setCategories] = useState<string[]>(() => {
     try {
-      const saved = localStorage.getItem('surf_flashcard_v2_categories');
+      const saved = localStorage.getItem('surf_flashcard_v3_categories');
       return saved ? JSON.parse(saved) : DEFAULT_CATEGORIES;
     } catch {
       return DEFAULT_CATEGORIES;
@@ -80,7 +82,7 @@ export function App() {
   // Useful Phrases State
   const [phrases, setPhrases] = useState<SurfPhrase[]>(() => {
     try {
-      const saved = localStorage.getItem('surf_flashcard_v2_phrases');
+      const saved = localStorage.getItem('surf_flashcard_v3_phrases');
       return saved ? JSON.parse(saved) : SURF_PHRASES;
     } catch {
       return SURF_PHRASES;
@@ -89,7 +91,7 @@ export function App() {
 
   const [phraseCategories] = useState<string[]>(() => {
     try {
-      const saved = localStorage.getItem('surf_flashcard_v2_phrase_categories');
+      const saved = localStorage.getItem('surf_flashcard_v3_phrase_categories');
       return saved ? JSON.parse(saved) : DEFAULT_PHRASE_CATEGORIES;
     } catch {
       return DEFAULT_PHRASE_CATEGORIES;
@@ -101,7 +103,7 @@ export function App() {
 
   const [starredIds, setStarredIds] = useState<string[]>(() => {
     try {
-      const saved = localStorage.getItem('surf_flashcard_v2_starred');
+      const saved = localStorage.getItem('surf_flashcard_v3_starred');
       return saved ? JSON.parse(saved) : [];
     } catch {
       return [];
@@ -110,7 +112,7 @@ export function App() {
 
   const [masteredIds, setMasteredIds] = useState<string[]>(() => {
     try {
-      const saved = localStorage.getItem('surf_flashcard_v2_mastered');
+      const saved = localStorage.getItem('surf_flashcard_v3_mastered');
       return saved ? JSON.parse(saved) : [];
     } catch {
       return [];
@@ -131,10 +133,10 @@ export function App() {
 
   const { speak, stop, isSpeaking, rate, setRate } = useSpeech();
 
-  // Storage Effects (v2 Keys)
+  // Storage Effects (v3 Keys)
   useEffect(() => {
     try {
-      localStorage.setItem('surf_flashcard_v2_vocabulary', JSON.stringify(vocabulary));
+      localStorage.setItem('surf_flashcard_v3_vocabulary', JSON.stringify(vocabulary));
     } catch (e) {
       console.error('Failed to save vocabulary', e);
     }
@@ -142,7 +144,7 @@ export function App() {
 
   useEffect(() => {
     try {
-      localStorage.setItem('surf_flashcard_v2_phrases', JSON.stringify(phrases));
+      localStorage.setItem('surf_flashcard_v3_phrases', JSON.stringify(phrases));
     } catch (e) {
       console.error('Failed to save phrases', e);
     }
@@ -150,7 +152,7 @@ export function App() {
 
   useEffect(() => {
     try {
-      localStorage.setItem('surf_flashcard_v2_categories', JSON.stringify(categories));
+      localStorage.setItem('surf_flashcard_v3_categories', JSON.stringify(categories));
     } catch (e) {
       console.error('Failed to save categories', e);
     }
@@ -158,7 +160,7 @@ export function App() {
 
   useEffect(() => {
     try {
-      localStorage.setItem('surf_flashcard_v2_starred', JSON.stringify(starredIds));
+      localStorage.setItem('surf_flashcard_v3_starred', JSON.stringify(starredIds));
     } catch (e) {
       console.error('Failed to save starred cards', e);
     }
@@ -166,7 +168,7 @@ export function App() {
 
   useEffect(() => {
     try {
-      localStorage.setItem('surf_flashcard_v2_mastered', JSON.stringify(masteredIds));
+      localStorage.setItem('surf_flashcard_v3_mastered', JSON.stringify(masteredIds));
     } catch (e) {
       console.error('Failed to save mastered cards', e);
     }
