@@ -1,16 +1,16 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 
 const DEFAULT_API_KEY = 'sk_a94d385d4d9c20169d80025a3593d71275974e691fae7518';
-// Built-in American Male ElevenLabs voice (100% Free & 200 OK)
-const AMERICAN_MALE_VOICE_ID = 'bIHbv24MWmeRgasZH58o'; // Will - Relaxed Optimist American Male Voice
+// Built-in ElevenLabs male voice (100% Free & 200 OK)
+const CHARLIE_VOICE_ID = 'IKne3meq5aSn9XLyUdCD'; // Charlie - Deep, confident & energetic male voice
 
 export function useSpeech() {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [rate, setRate] = useState<number>(1.0);
 
-  // ElevenLabs State initialized with default API Key and Will (American Male) Voice ID
+  // ElevenLabs State initialized with default API Key and Charlie's Voice ID
   const [apiKey] = useState<string>(DEFAULT_API_KEY);
-  const [voiceId] = useState<string>(AMERICAN_MALE_VOICE_ID);
+  const [voiceId] = useState<string>(CHARLIE_VOICE_ID);
 
   // Web Speech Fallback State
   const synthRef = useRef<SpeechSynthesis | null>(null);
@@ -42,8 +42,8 @@ export function useSpeech() {
         const preferred =
           englishVoices.find(
             (v) =>
-              v.name.includes('Alex') ||
               v.name.includes('Daniel') ||
+              v.name.includes('Alex') ||
               v.name.includes('Google') ||
               v.name.includes('Natural') ||
               v.name.includes('Samantha')
@@ -98,7 +98,7 @@ export function useSpeech() {
     [rate, selectedWebVoice]
   );
 
-  // Main Speak Function (ElevenLabs API using Will - American Male with session cache & WebSpeech fallback)
+  // Main Speak Function (ElevenLabs API using Charlie with session cache & WebSpeech fallback)
   const speak = useCallback(
     async (text: string) => {
       stop();
@@ -123,7 +123,7 @@ export function useSpeech() {
         return;
       }
 
-      // Call ElevenLabs Text-to-Speech API (Will - American Male)
+      // Call ElevenLabs Text-to-Speech API (Charlie)
       try {
         setIsSpeaking(true);
         const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
