@@ -120,16 +120,30 @@ export const Flashcard: React.FC<FlashcardProps> = ({
           className={`relative w-full min-h-[420px] rounded-[28px] transition-transform duration-700 transform-style-3d cursor-pointer shadow-xl ${
             isFlipped ? 'rotate-y-180' : ''
           }`}
+          style={{
+            WebkitTransformStyle: 'preserve-3d',
+            transformStyle: 'preserve-3d'
+          }}
         >
           {/* ================= FRONT SIDE (White Card) ================= */}
-          <div className="absolute inset-0 w-full h-full rounded-[28px] p-6 backface-hidden glass-card-front flex flex-col justify-between overflow-hidden bg-white border border-[#0B1F3B]/12">
+          <div
+            className={`absolute inset-0 w-full h-full rounded-[28px] p-6 glass-card-front flex flex-col justify-between overflow-hidden bg-white border border-[#0B1F3B]/12 transition-opacity duration-300 ${
+              isFlipped ? 'opacity-0 pointer-events-none invisible' : 'opacity-100 z-10 visible'
+            }`}
+            style={{
+              WebkitBackfaceVisibility: 'hidden',
+              backfaceVisibility: 'hidden',
+              transform: 'rotateY(0deg) translateZ(1px)',
+              WebkitTransform: 'rotateY(0deg) translateZ(1px)'
+            }}
+          >
             {/* Top Bar: Category Pill & Star / Mastered Actions */}
             <div className="flex items-center justify-between z-10">
-              <span className="px-3 py-1 text-xs font-bold rounded-full bg-[#F6F1EA] text-[#0B1F3B]/80 border border-[#0B1F3B]/10">
+              <span className="px-3 py-1 text-xs font-bold rounded-full bg-[#F6F1EA] text-[#0B1F3B]/80 border border-[#0B1F3B]/10 truncate max-w-[60%]">
                 {card.category}
               </span>
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 shrink-0">
                 {/* Bookmark / Star Button */}
                 <button
                   onClick={handleStarClick}
@@ -195,7 +209,17 @@ export const Flashcard: React.FC<FlashcardProps> = ({
           </div>
 
           {/* ================= BACK SIDE (Dark Midnight Navy Card) ================= */}
-          <div className="absolute inset-0 w-full h-full rounded-[28px] p-6 backface-hidden rotate-y-180 glass-card-back flex flex-col justify-between overflow-hidden bg-[#0B1F3B] text-white">
+          <div
+            className={`absolute inset-0 w-full h-full rounded-[28px] p-6 glass-card-back flex flex-col justify-between overflow-hidden bg-[#0B1F3B] text-white transition-opacity duration-300 ${
+              isFlipped ? 'opacity-100 z-10 visible' : 'opacity-0 pointer-events-none invisible'
+            }`}
+            style={{
+              WebkitBackfaceVisibility: 'hidden',
+              backfaceVisibility: 'hidden',
+              transform: 'rotateY(180deg) translateZ(1px)',
+              WebkitTransform: 'rotateY(180deg) translateZ(1px)'
+            }}
+          >
             {/* Top Bar: Thai Badge & Audio */}
             <div className="flex items-center justify-between z-10">
               <span className="px-3.5 py-1 text-xs font-semibold rounded-full bg-[#EB6F43] text-white">
