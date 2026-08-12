@@ -10,15 +10,19 @@ export interface SurfVocabulary {
   difficulty?: 'Beginner' | 'Intermediate' | 'Advanced';
 }
 
-export const CATEGORIES = [
-  'All Categories',
+export const DEFAULT_CATEGORIES: string[] = [
   'Paddling & Takeoff',
   'Ocean & Environment',
   'Board & Equipment',
   'Safety & Etiquette',
   'Stance & Riding',
   'Wave Reading & Positioning'
-] as const;
+];
+
+export const CATEGORIES = [
+  'All Categories',
+  ...DEFAULT_CATEGORIES
+];
 
 export const SURF_VOCABULARY: SurfVocabulary[] = [
   {

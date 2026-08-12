@@ -1,7 +1,9 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import confetti from 'canvas-confetti';
-import { SURF_VOCABULARY, CATEGORIES } from './data/surfVocabulary';
+import { SURF_VOCABULARY, DEFAULT_CATEGORIES } from './data/surfVocabulary';
 import type { SurfVocabulary } from './data/surfVocabulary';
+import { TRANSLATIONS } from './data/translations';
+import type { Language } from './data/translations';
 import { Header } from './components/Header';
 import { CategoryFilter } from './components/CategoryFilter';
 import { Flashcard } from './components/Flashcard';
@@ -12,12 +14,44 @@ import { useSpeech } from './hooks/useSpeech';
 import { Waves, BookMarked, RefreshCcw } from 'lucide-react';
 
 export function App() {
+  const [lang, setLang] = useState<Language>(() => {
+    try {
+      const saved = localStorage.getItem('surf_flashcard_lang');
+      return (saved === 'th' || saved === 'en') ? saved : 'en';
+    } catch {
+      return 'en';
+    }
+  });
+
+  const t = useMemo(() => TRANSLATIONS[lang], [lang]);
+
+  const toggleLang = useCallback(() => {
+    setLang((prev) => (prev === 'en' ? 'th' : 'en'));
+  }, []);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('surf_flashcard_lang', lang);
+    } catch (e) {
+      console.error('Failed to save language preference', e);
+    }
+  }, [lang]);
+
   const [vocabulary, setVocabulary] = useState<SurfVocabulary[]>(() => {
     try {
       const saved = localStorage.getItem('surf_flashcard_custom_vocabulary');
       return saved ? JSON.parse(saved) : SURF_VOCABULARY;
     } catch {
       return SURF_VOCABULARY;
+    }
+  });
+
+  const [categories, setCategories] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem('surf_flashcard_categories');
+      return saved ? JSON.parse(saved) : DEFAULT_CATEGORIES;
+    } catch {
+      return DEFAULT_CATEGORIES;
     }
   });
 
@@ -62,6 +96,15 @@ export function App() {
     }
   }, [vocabulary]);
 
+  // Save categories to local storage
+  useEffect(() => {
+    try {
+      localStorage.setItem('surf_flashcard_categories', JSON.stringify(categories));
+    } catch (e) {
+      console.error('Failed to save categories', e);
+    }
+  }, [categories]);
+
   // Save progress to local storage
   useEffect(() => {
     try {
@@ -100,8 +143,38 @@ export function App() {
 
   const handleResetVocabulary = useCallback(() => {
     setVocabulary(SURF_VOCABULARY);
+    setCategories(DEFAULT_CATEGORIES);
     localStorage.removeItem('surf_flashcard_custom_vocabulary');
+    localStorage.removeItem('surf_flashcard_categories');
   }, []);
+
+  // Category Handlers
+  const handleAddCategory = useCallback((newCat: string) => {
+    setCategories((prev) => {
+      if (prev.includes(newCat)) return prev;
+      return [...prev, newCat];
+    });
+  }, []);
+
+  const handleDeleteCategory = useCallback((catToDelete: string) => {
+    setCategories((prev) => {
+      const remaining = prev.filter((c) => c !== catToDelete);
+      const fallbackCat = remaining[0] || 'General';
+
+      // Reassign cards in deleted category to fallback category
+      setVocabulary((prevVocab) =>
+        prevVocab.map((card) =>
+          card.category === catToDelete ? { ...card, category: fallbackCat } : card
+        )
+      );
+
+      return remaining;
+    });
+
+    if (selectedCategory === catToDelete) {
+      setSelectedCategory('All Categories');
+    }
+  }, [selectedCategory]);
 
   // Compute filtered dataset
   const filteredCards = useMemo(() => {
@@ -134,14 +207,12 @@ export function App() {
       'All Categories': vocabulary.length
     };
 
-    CATEGORIES.forEach((cat) => {
-      if (cat !== 'All Categories') {
-        counts[cat] = vocabulary.filter((card) => card.category === cat).length;
-      }
+    categories.forEach((cat) => {
+      counts[cat] = vocabulary.filter((card) => card.category === cat).length;
     });
 
     return counts;
-  }, [vocabulary]);
+  }, [vocabulary, categories]);
 
   // Ensure index stays in bounds when filter changes
   useEffect(() => {
@@ -189,7 +260,7 @@ export function App() {
           particleCount: 50,
           spread: 60,
           origin: { y: 0.8 },
-          colors: ['#06b6d4', '#14b8a6', '#f59e0b']
+          colors: ['#E52E2A', '#1D52B8', '#0F214A']
         });
       }
       return isNewMaster ? [...prev, id] : prev.filter((item) => item !== id);
@@ -230,7 +301,7 @@ export function App() {
   }, [handleNext, handlePrev, speak, currentCard, isPinModalOpen, isCardManagerOpen]);
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-between pb-8 select-none overflow-x-hidden">
+    <div className="min-h-screen bg-[#F7F5F0] text-[#0F214A] flex flex-col justify-between pb-8 select-none overflow-x-hidden">
       {/* Header with Stats, Progress & PIN Protected Manage Cards Button */}
       <Header
         currentIndex={currentIndex}
@@ -241,13 +312,18 @@ export function App() {
         setShowStarredOnly={setShowStarredOnly}
         onResetProgress={handleResetProgress}
         onOpenPinModal={() => setIsPinModalOpen(true)}
+        lang={lang}
+        onToggleLang={toggleLang}
+        t={t}
       />
 
       {/* Category Filter Pills */}
       <CategoryFilter
+        categories={categories}
         selectedCategory={selectedCategory}
         onSelectCategory={setSelectedCategory}
         categoryCounts={categoryCounts}
+        t={t}
       />
 
       {/* Main Flashcard View */}
@@ -265,22 +341,23 @@ export function App() {
             onToggleMastered={handleToggleMastered}
             onSwipeNext={handleNext}
             onSwipePrev={handlePrev}
+            t={t}
           />
         ) : (
           /* Empty State when zero cards match criteria */
-          <div className="w-full max-w-lg mx-auto px-4 py-16 text-center glass-panel rounded-3xl border border-slate-800 my-6 shadow-2xl">
-            <div className="w-16 h-16 rounded-2xl bg-amber-500/20 text-amber-300 flex items-center justify-center mx-auto mb-4 border border-amber-500/30">
-              <BookMarked className="w-8 h-8" />
+          <div className="w-full max-w-lg mx-auto px-4 py-16 text-center glass-panel rounded-3xl border border-[#0F214A]/15 my-6 shadow-md bg-white">
+            <div className="w-16 h-16 rounded-2xl bg-[#E52E2A]/10 text-[#E52E2A] flex items-center justify-center mx-auto mb-4 border border-[#E52E2A]/20">
+              <BookMarked className="w-8 h-8 text-[#E52E2A]" />
             </div>
-            <h3 className="text-xl font-bold text-white mb-2">No Bookmarked Cards</h3>
-            <p className="text-sm text-slate-400 mb-6">
-              You haven't bookmarked any cards in this category yet. Click the bookmark icon on any card to save it for quick review!
+            <h3 className="text-xl font-black text-[#0F214A] mb-2">{t.noBookmarkedTitle}</h3>
+            <p className="text-sm text-[#0F214A]/70 font-semibold mb-6">
+              {t.noBookmarkedDesc}
             </p>
             <button
               onClick={() => setShowStarredOnly(false)}
-              className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-teal-500 text-slate-950 font-bold text-sm shadow-lg shadow-cyan-500/20 hover:brightness-110 transition-all flex items-center gap-2 mx-auto"
+              className="px-5 py-2.5 rounded-xl bg-[#E52E2A] text-white font-black text-sm shadow-md hover:bg-[#D4221E] transition-all flex items-center gap-2 mx-auto"
             >
-              <RefreshCcw className="w-4 h-4" /> View All Cards
+              <RefreshCcw className="w-4 h-4 text-white" /> {t.viewAllCards}
             </button>
           </div>
         )}
@@ -296,6 +373,7 @@ export function App() {
           rate={rate}
           setRate={setRate}
           totalCards={filteredCards.length}
+          t={t}
         />
       )}
 
@@ -308,23 +386,28 @@ export function App() {
           setIsCardManagerOpen(true);
         }}
         correctPin="2026"
+        t={t}
       />
 
-      {/* Card Manager Modal (Add, Edit, Delete Cards) */}
+      {/* Card Manager Modal (Add, Edit, Delete Cards & Categories) */}
       <CardManagerModal
         isOpen={isCardManagerOpen}
         onClose={() => setIsCardManagerOpen(false)}
         cards={vocabulary}
+        categories={categories}
         onAddCard={handleAddCard}
         onEditCard={handleEditCard}
         onDeleteCard={handleDeleteCard}
         onResetVocabulary={handleResetVocabulary}
+        onAddCategory={handleAddCategory}
+        onDeleteCategory={handleDeleteCategory}
+        t={t}
       />
 
       {/* Footer Branding */}
-      <footer className="text-center text-xs text-slate-500 mt-2">
+      <footer className="text-center text-xs text-[#0F214A]/60 font-semibold mt-2">
         <p className="flex items-center justify-center gap-1">
-          Crafted with <Waves className="w-3.5 h-3.5 text-cyan-400 inline" /> for Surf Instructors & English Surf Learners
+          Crafted with <Waves className="w-3.5 h-3.5 text-[#1D52B8] inline" /> for Surf Instructors & English Surf Learners
         </p>
       </footer>
     </div>
