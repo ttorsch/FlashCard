@@ -48,10 +48,20 @@ export function App() {
     }
   }, [lang]);
 
+  // Auto-purge legacy localStorage keys on mount to prevent old cached mock data
+  useEffect(() => {
+    try {
+      localStorage.removeItem('surf_flashcard_custom_vocabulary');
+      localStorage.removeItem('surf_flashcard_categories');
+    } catch {
+      // Ignore storage errors
+    }
+  }, []);
+
   // Vocabulary State
   const [vocabulary, setVocabulary] = useState<SurfVocabulary[]>(() => {
     try {
-      const saved = localStorage.getItem('surf_flashcard_custom_vocabulary');
+      const saved = localStorage.getItem('surf_flashcard_v2_vocabulary');
       return saved ? JSON.parse(saved) : SURF_VOCABULARY;
     } catch {
       return SURF_VOCABULARY;
@@ -60,7 +70,7 @@ export function App() {
 
   const [categories, setCategories] = useState<string[]>(() => {
     try {
-      const saved = localStorage.getItem('surf_flashcard_categories');
+      const saved = localStorage.getItem('surf_flashcard_v2_categories');
       return saved ? JSON.parse(saved) : DEFAULT_CATEGORIES;
     } catch {
       return DEFAULT_CATEGORIES;
@@ -70,7 +80,7 @@ export function App() {
   // Useful Phrases State
   const [phrases, setPhrases] = useState<SurfPhrase[]>(() => {
     try {
-      const saved = localStorage.getItem('surf_flashcard_phrases');
+      const saved = localStorage.getItem('surf_flashcard_v2_phrases');
       return saved ? JSON.parse(saved) : SURF_PHRASES;
     } catch {
       return SURF_PHRASES;
@@ -79,7 +89,7 @@ export function App() {
 
   const [phraseCategories] = useState<string[]>(() => {
     try {
-      const saved = localStorage.getItem('surf_flashcard_phrase_categories');
+      const saved = localStorage.getItem('surf_flashcard_v2_phrase_categories');
       return saved ? JSON.parse(saved) : DEFAULT_PHRASE_CATEGORIES;
     } catch {
       return DEFAULT_PHRASE_CATEGORIES;
@@ -91,7 +101,7 @@ export function App() {
 
   const [starredIds, setStarredIds] = useState<string[]>(() => {
     try {
-      const saved = localStorage.getItem('surf_flashcard_starred');
+      const saved = localStorage.getItem('surf_flashcard_v2_starred');
       return saved ? JSON.parse(saved) : [];
     } catch {
       return [];
@@ -100,7 +110,7 @@ export function App() {
 
   const [masteredIds, setMasteredIds] = useState<string[]>(() => {
     try {
-      const saved = localStorage.getItem('surf_flashcard_mastered');
+      const saved = localStorage.getItem('surf_flashcard_v2_mastered');
       return saved ? JSON.parse(saved) : [];
     } catch {
       return [];
@@ -118,10 +128,10 @@ export function App() {
 
   const { speak, stop, isSpeaking, rate, setRate } = useSpeech();
 
-  // Storage Effects
+  // Storage Effects (v2 Keys)
   useEffect(() => {
     try {
-      localStorage.setItem('surf_flashcard_custom_vocabulary', JSON.stringify(vocabulary));
+      localStorage.setItem('surf_flashcard_v2_vocabulary', JSON.stringify(vocabulary));
     } catch (e) {
       console.error('Failed to save vocabulary', e);
     }
@@ -129,7 +139,7 @@ export function App() {
 
   useEffect(() => {
     try {
-      localStorage.setItem('surf_flashcard_phrases', JSON.stringify(phrases));
+      localStorage.setItem('surf_flashcard_v2_phrases', JSON.stringify(phrases));
     } catch (e) {
       console.error('Failed to save phrases', e);
     }
@@ -137,7 +147,7 @@ export function App() {
 
   useEffect(() => {
     try {
-      localStorage.setItem('surf_flashcard_categories', JSON.stringify(categories));
+      localStorage.setItem('surf_flashcard_v2_categories', JSON.stringify(categories));
     } catch (e) {
       console.error('Failed to save categories', e);
     }
@@ -145,7 +155,7 @@ export function App() {
 
   useEffect(() => {
     try {
-      localStorage.setItem('surf_flashcard_starred', JSON.stringify(starredIds));
+      localStorage.setItem('surf_flashcard_v2_starred', JSON.stringify(starredIds));
     } catch (e) {
       console.error('Failed to save starred cards', e);
     }
@@ -153,7 +163,7 @@ export function App() {
 
   useEffect(() => {
     try {
-      localStorage.setItem('surf_flashcard_mastered', JSON.stringify(masteredIds));
+      localStorage.setItem('surf_flashcard_v2_mastered', JSON.stringify(masteredIds));
     } catch (e) {
       console.error('Failed to save mastered cards', e);
     }
@@ -182,9 +192,11 @@ export function App() {
     setVocabulary(SURF_VOCABULARY);
     setCategories(DEFAULT_CATEGORIES);
     setPhrases(SURF_PHRASES);
+    localStorage.removeItem('surf_flashcard_v2_vocabulary');
+    localStorage.removeItem('surf_flashcard_v2_categories');
+    localStorage.removeItem('surf_flashcard_v2_phrases');
     localStorage.removeItem('surf_flashcard_custom_vocabulary');
     localStorage.removeItem('surf_flashcard_categories');
-    localStorage.removeItem('surf_flashcard_phrases');
   }, []);
 
   // Category Handlers
@@ -372,7 +384,7 @@ export function App() {
 
       {/* SCREEN 2: STUDY VOCABULARY */}
       {screen === 'study' && (
-        <div className="w-full max-w-md mx-auto px-4 pt-6 pb-24 flex flex-col gap-3 animate-fadeIn">
+        <div className="w-full max-w-md mx-auto px-4 pt-6 pb-16 flex flex-col gap-3 animate-fadeIn">
           {/* Top Header Bar */}
           <div className="flex items-center justify-between gap-2">
             <div className="flex flex-col gap-0.5">

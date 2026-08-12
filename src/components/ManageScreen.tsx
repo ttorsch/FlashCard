@@ -28,7 +28,7 @@ export const ManageScreen: React.FC<ManageScreenProps> = ({
   );
 
   return (
-    <div className="w-full max-w-md mx-auto px-4 pt-6 pb-24 flex flex-col gap-4 animate-fadeIn">
+    <div className="w-full max-w-md mx-auto px-4 pt-6 pb-16 flex flex-col gap-4 animate-fadeIn">
       {/* Title */}
       <div className="flex flex-col gap-0.5">
         <span className="lb-micro">SURF THAI</span>

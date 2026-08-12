@@ -23,8 +23,8 @@ export const Navbar: React.FC<NavbarProps> = ({
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-[#0B1F3B]/10 safe-area-bottom shadow-lg">
-      <div className="max-w-md mx-auto flex items-center justify-around px-2 py-2">
+    <nav className="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-[#0B1F3B]/10 safe-area-bottom shadow-md">
+      <div className="max-w-md mx-auto flex items-center justify-around px-1.5 py-1 min-h-[44px]">
         {tabs.map((tab) => {
           const isActive = currentScreen === tab.key;
           const Icon = tab.icon;
@@ -33,29 +33,22 @@ export const Navbar: React.FC<NavbarProps> = ({
             <button
               key={tab.key}
               onClick={() => onSelectScreen(tab.key)}
-              className="flex-1 flex flex-col items-center gap-1 py-1 px-1 rounded-xl transition-all cursor-pointer active-push"
+              className={`flex-1 flex items-center justify-center gap-1 py-1 px-1 rounded-xl transition-all cursor-pointer active-push ${
+                isActive ? 'bg-[#EB6F43]/10 text-[#0B1F3B]' : 'text-[#0B1F3B]/50 hover:text-[#0B1F3B]'
+              }`}
             >
-              <div className="relative flex items-center justify-center">
-                <span
-                  className={`w-1.5 h-1.5 rounded-full transition-all ${
-                    isActive ? 'bg-[#EB6F43]' : 'bg-transparent'
-                  }`}
-                />
-              </div>
-              <div className="flex items-center gap-1">
-                <Icon
-                  className={`w-4 h-4 transition-colors ${
-                    isActive ? 'text-[#0B1F3B]' : 'text-[#0B1F3B]/45'
-                  }`}
-                />
-                <span
-                  className={`text-[11px] font-bold transition-colors truncate ${
-                    isActive ? 'text-[#0B1F3B]' : 'text-[#0B1F3B]/50'
-                  }`}
-                >
-                  {tab.name}
-                </span>
-              </div>
+              <Icon
+                className={`w-3.5 h-3.5 shrink-0 transition-colors ${
+                  isActive ? 'text-[#EB6F43]' : 'text-[#0B1F3B]/45'
+                }`}
+              />
+              <span
+                className={`text-[11px] font-bold truncate ${
+                  isActive ? 'text-[#0B1F3B]' : 'text-[#0B1F3B]/50'
+                }`}
+              >
+                {tab.name}
+              </span>
             </button>
           );
         })}

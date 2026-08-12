@@ -51,7 +51,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   };
 
   return (
-    <div className="w-full max-w-md mx-auto px-4 pt-6 pb-24 flex flex-col gap-6 animate-fadeIn">
+    <div className="w-full max-w-md mx-auto px-4 pt-6 pb-16 flex flex-col gap-6 animate-fadeIn">
       {/* Hero Header */}
       <div className="flex flex-col gap-2">
         <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#EB6F43]/10 text-[#EB6F43] font-bold text-[11px] w-fit">

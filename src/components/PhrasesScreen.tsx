@@ -107,7 +107,7 @@ export const PhrasesScreen: React.FC<PhrasesScreenProps> = ({
   const allCategoryList = ['All Phrases', ...phraseCategories];
 
   return (
-    <div className="w-full max-w-md mx-auto px-4 pt-6 pb-24 flex flex-col gap-3 animate-fadeIn">
+    <div className="w-full max-w-md mx-auto px-4 pt-6 pb-16 flex flex-col gap-3 animate-fadeIn">
       {/* Top Header Bar */}
       <div className="flex items-center justify-between gap-2">
         <div className="flex flex-col gap-0.5">
