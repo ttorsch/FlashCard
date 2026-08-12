@@ -4,22 +4,30 @@ import { SURF_VOCABULARY, DEFAULT_CATEGORIES } from './data/surfVocabulary';
 import type { SurfVocabulary } from './data/surfVocabulary';
 import { TRANSLATIONS } from './data/translations';
 import type { Language } from './data/translations';
-import { Header } from './components/Header';
+
+import { Navbar } from './components/Navbar';
+import type { ScreenType } from './components/Navbar';
+import { HomeScreen } from './components/HomeScreen';
 import { CategoryFilter } from './components/CategoryFilter';
 import { Flashcard } from './components/Flashcard';
 import { ControlPanel } from './components/ControlPanel';
+import { ManageScreen } from './components/ManageScreen';
 import { PinModal } from './components/PinModal';
 import { CardManagerModal } from './components/CardManagerModal';
+
 import { useSpeech } from './hooks/useSpeech';
-import { Waves, BookMarked, RefreshCcw } from 'lucide-react';
+import { BookMarked, RefreshCcw, Globe } from 'lucide-react';
 
 export function App() {
+  const [screen, setScreen] = useState<ScreenType>('study');
+  const [frontCardLang, setFrontCardLang] = useState<'EN' | 'TH'>('EN');
+
   const [lang, setLang] = useState<Language>(() => {
     try {
       const saved = localStorage.getItem('surf_flashcard_lang');
-      return (saved === 'th' || saved === 'en') ? saved : 'en';
+      return saved === 'th' || saved === 'en' ? saved : 'th';
     } catch {
-      return 'en';
+      return 'th';
     }
   });
 
@@ -57,7 +65,7 @@ export function App() {
 
   const [selectedCategory, setSelectedCategory] = useState<string>('All Categories');
   const [showStarredOnly, setShowStarredOnly] = useState<boolean>(false);
-  
+
   const [starredIds, setStarredIds] = useState<string[]>(() => {
     try {
       const saved = localStorage.getItem('surf_flashcard_starred');
@@ -81,13 +89,13 @@ export function App() {
   const [currentIndex, setCurrentIndex] = useState<number>(0);
   const [isFlipped, setIsFlipped] = useState<boolean>(false);
 
-  // PIN & Card Manager Modals
+  // Modals
   const [isPinModalOpen, setIsPinModalOpen] = useState(false);
   const [isCardManagerOpen, setIsCardManagerOpen] = useState(false);
 
   const { speak, stop, isSpeaking, rate, setRate } = useSpeech();
 
-  // Save vocabulary to local storage
+  // Storage Effects
   useEffect(() => {
     try {
       localStorage.setItem('surf_flashcard_custom_vocabulary', JSON.stringify(vocabulary));
@@ -96,7 +104,6 @@ export function App() {
     }
   }, [vocabulary]);
 
-  // Save categories to local storage
   useEffect(() => {
     try {
       localStorage.setItem('surf_flashcard_categories', JSON.stringify(categories));
@@ -105,7 +112,6 @@ export function App() {
     }
   }, [categories]);
 
-  // Save progress to local storage
   useEffect(() => {
     try {
       localStorage.setItem('surf_flashcard_starred', JSON.stringify(starredIds));
@@ -161,7 +167,6 @@ export function App() {
       const remaining = prev.filter((c) => c !== catToDelete);
       const fallbackCat = remaining[0] || 'General';
 
-      // Reassign cards in deleted category to fallback category
       setVocabulary((prevVocab) =>
         prevVocab.map((card) =>
           card.category === catToDelete ? { ...card, category: fallbackCat } : card
@@ -189,7 +194,6 @@ export function App() {
     }
 
     if (isShuffled) {
-      // Deterministic shuffle based on seed
       const array = [...list];
       for (let i = array.length - 1; i > 0; i--) {
         const j = Math.floor(Math.abs(Math.sin(i + shuffledSeed)) * (i + 1));
@@ -214,7 +218,7 @@ export function App() {
     return counts;
   }, [vocabulary, categories]);
 
-  // Ensure index stays in bounds when filter changes
+  // Reset index on filter change
   useEffect(() => {
     setCurrentIndex(0);
     setIsFlipped(false);
@@ -260,18 +264,30 @@ export function App() {
           particleCount: 50,
           spread: 60,
           origin: { y: 0.8 },
-          colors: ['#E52E2A', '#1D52B8', '#0F214A']
+          colors: ['#EB6F43', '#0B1F3B', '#F6F1EA']
         });
       }
       return isNewMaster ? [...prev, id] : prev.filter((item) => item !== id);
     });
   }, []);
 
-  const handleResetProgress = useCallback(() => {
-    setStarredIds([]);
-    setMasteredIds([]);
-    setShowStarredOnly(false);
+  // Home Screen actions
+  const handleOpenStudyCategory = useCallback((catName: string) => {
+    setSelectedCategory(catName);
+    setScreen('study');
+    setCurrentIndex(0);
+    setIsFlipped(false);
   }, []);
+
+  const handleEditCardFromManage = useCallback((card: SurfVocabulary) => {
+    setSelectedCategory(card.category);
+    const indexInCat = vocabulary
+      .filter((c) => c.category === card.category)
+      .findIndex((c) => c.id === card.id);
+    setCurrentIndex(Math.max(0, indexInCat));
+    setScreen('study');
+    setIsFlipped(false);
+  }, [vocabulary]);
 
   // Keyboard navigation shortcuts
   useEffect(() => {
@@ -300,82 +316,146 @@ export function App() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [handleNext, handlePrev, speak, currentCard, isPinModalOpen, isCardManagerOpen]);
 
+  const progressPct =
+    filteredCards.length > 0 ? Math.round(((currentIndex + 1) / filteredCards.length) * 100) : 0;
+
   return (
-    <div className="min-h-screen bg-[#F7F5F0] text-[#0F214A] flex flex-col justify-between pb-8 select-none overflow-x-hidden">
-      {/* Header with Stats, Progress & PIN Protected Manage Cards Button */}
-      <Header
-        currentIndex={currentIndex}
-        totalCards={filteredCards.length}
-        starredCount={starredIds.length}
-        masteredCount={masteredIds.length}
-        showStarredOnly={showStarredOnly}
-        setShowStarredOnly={setShowStarredOnly}
-        onResetProgress={handleResetProgress}
-        onOpenPinModal={() => setIsPinModalOpen(true)}
-        lang={lang}
-        onToggleLang={toggleLang}
-        t={t}
-      />
-
-      {/* Category Filter Pills */}
-      <CategoryFilter
-        categories={categories}
-        selectedCategory={selectedCategory}
-        onSelectCategory={setSelectedCategory}
-        categoryCounts={categoryCounts}
-        t={t}
-      />
-
-      {/* Main Flashcard View */}
-      <main className="flex-1 flex flex-col items-center justify-center my-2">
-        {currentCard ? (
-          <Flashcard
-            card={currentCard}
-            isFlipped={isFlipped}
-            onFlip={() => setIsFlipped((prev) => !prev)}
-            onSpeak={speak}
-            isSpeaking={isSpeaking}
-            isStarred={starredIds.includes(currentCard.id)}
-            onToggleStar={handleToggleStar}
-            isMastered={masteredIds.includes(currentCard.id)}
-            onToggleMastered={handleToggleMastered}
-            onSwipeNext={handleNext}
-            onSwipePrev={handlePrev}
-            t={t}
-          />
-        ) : (
-          /* Empty State when zero cards match criteria */
-          <div className="w-full max-w-lg mx-auto px-4 py-16 text-center glass-panel rounded-3xl border border-[#0F214A]/15 my-6 shadow-md bg-white">
-            <div className="w-16 h-16 rounded-2xl bg-[#E52E2A]/10 text-[#E52E2A] flex items-center justify-center mx-auto mb-4 border border-[#E52E2A]/20">
-              <BookMarked className="w-8 h-8 text-[#E52E2A]" />
-            </div>
-            <h3 className="text-xl font-black text-[#0F214A] mb-2">{t.noBookmarkedTitle}</h3>
-            <p className="text-sm text-[#0F214A]/70 font-semibold mb-6">
-              {t.noBookmarkedDesc}
-            </p>
-            <button
-              onClick={() => setShowStarredOnly(false)}
-              className="px-5 py-2.5 rounded-xl bg-[#E52E2A] text-white font-black text-sm shadow-md hover:bg-[#D4221E] transition-all flex items-center gap-2 mx-auto"
-            >
-              <RefreshCcw className="w-4 h-4 text-white" /> {t.viewAllCards}
-            </button>
-          </div>
-        )}
-      </main>
-
-      {/* Footer Controls & Navigation */}
-      {filteredCards.length > 0 && (
-        <ControlPanel
-          onPrev={handlePrev}
-          onNext={handleNext}
-          onShuffle={handleShuffle}
-          isShuffled={isShuffled}
-          rate={rate}
-          setRate={setRate}
-          totalCards={filteredCards.length}
+    <div className="min-h-screen bg-[#F6F1EA] text-[#0B1F3B] flex flex-col justify-between select-none overflow-x-hidden">
+      {/* SCREEN 1: HOME */}
+      {screen === 'home' && (
+        <HomeScreen
+          vocabulary={vocabulary}
+          categories={categories}
+          masteredIds={masteredIds}
+          onOpenStudyCategory={handleOpenStudyCategory}
+          onGoStudy={() => setScreen('study')}
           t={t}
         />
       )}
+
+      {/* SCREEN 2: STUDY */}
+      {screen === 'study' && (
+        <div className="w-full max-w-md mx-auto px-4 pt-6 pb-24 flex flex-col gap-3 animate-fadeIn">
+          {/* Top Header Bar */}
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex flex-col gap-0.5">
+              <span className="lb-micro">SURF THAI</span>
+              <h1 className="text-xl font-black text-[#0B1F3B]">
+                {t.tabStudy}
+              </h1>
+            </div>
+
+            <div className="flex items-center gap-2">
+              {/* Front Card Language Toggle */}
+              <button
+                onClick={() => setFrontCardLang((prev) => (prev === 'EN' ? 'TH' : 'EN'))}
+                className="px-3 py-1.5 rounded-full bg-white text-[#0B1F3B] border border-[#0B1F3B]/15 font-bold text-xs active-push shadow-xs cursor-pointer"
+              >
+                หน้าการ์ด: {frontCardLang}
+              </button>
+
+              {/* Site Language Switcher */}
+              <button
+                onClick={toggleLang}
+                className="p-2 rounded-full bg-white text-[#0B1F3B] border border-[#0B1F3B]/15 font-bold text-xs active-push shadow-xs cursor-pointer"
+                title="Switch UI Language"
+              >
+                <Globe className="w-4 h-4 text-[#EB6F43]" />
+              </button>
+            </div>
+          </div>
+
+          {/* Category Filter Chips */}
+          <CategoryFilter
+            categories={categories}
+            selectedCategory={selectedCategory}
+            onSelectCategory={setSelectedCategory}
+            categoryCounts={categoryCounts}
+            t={t}
+          />
+
+          {/* Progress Indicator */}
+          <div className="flex items-center justify-between text-xs font-bold text-[#0B1F3B]/60 px-1">
+            <span>
+              {filteredCards.length > 0 ? currentIndex + 1 : 0} / {filteredCards.length}
+            </span>
+            <span className="text-[#EB6F43] font-mono font-bold">{progressPct}%</span>
+          </div>
+
+          {/* Progress Bar */}
+          <div className="w-full h-1.5 bg-[#0B1F3B]/10 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-[#EB6F43] rounded-full transition-all duration-300 ease-out"
+              style={{ width: `${progressPct}%` }}
+            />
+          </div>
+
+          {/* Main Flashcard */}
+          <main className="my-1">
+            {currentCard ? (
+              <Flashcard
+                card={currentCard}
+                isFlipped={isFlipped}
+                onFlip={() => setIsFlipped((prev) => !prev)}
+                onSpeak={speak}
+                isSpeaking={isSpeaking}
+                isStarred={starredIds.includes(currentCard.id)}
+                onToggleStar={handleToggleStar}
+                isMastered={masteredIds.includes(currentCard.id)}
+                onToggleMastered={handleToggleMastered}
+                onSwipeNext={handleNext}
+                onSwipePrev={handlePrev}
+                frontLang={frontCardLang}
+                t={t}
+              />
+            ) : (
+              <div className="w-full max-w-sm mx-auto px-4 py-16 text-center bg-white rounded-3xl border border-[#0B1F3B]/15 my-6 shadow-sm">
+                <div className="w-14 h-14 rounded-2xl bg-[#EB6F43]/10 text-[#EB6F43] flex items-center justify-center mx-auto mb-3 border border-[#EB6F43]/20">
+                  <BookMarked className="w-7 h-7 text-[#EB6F43]" />
+                </div>
+                <h3 className="text-lg font-black text-[#0B1F3B] mb-1">{t.noBookmarkedTitle}</h3>
+                <p className="text-xs text-[#0B1F3B]/70 font-semibold mb-5">
+                  {t.noBookmarkedDesc}
+                </p>
+                <button
+                  onClick={() => setShowStarredOnly(false)}
+                  className="px-5 py-2.5 rounded-full bg-[#EB6F43] text-white font-bold text-xs shadow-md hover:bg-[#D85F35] transition-all flex items-center gap-2 mx-auto cursor-pointer"
+                >
+                  <RefreshCcw className="w-3.5 h-3.5 text-white" /> {t.viewAllCards}
+                </button>
+              </div>
+            )}
+          </main>
+
+          {/* Footer Controls */}
+          {filteredCards.length > 0 && (
+            <ControlPanel
+              onPrev={handlePrev}
+              onNext={handleNext}
+              onShuffle={handleShuffle}
+              isShuffled={isShuffled}
+              rate={rate}
+              setRate={setRate}
+              totalCards={filteredCards.length}
+              t={t}
+            />
+          )}
+        </div>
+      )}
+
+      {/* SCREEN 3: MANAGE */}
+      {screen === 'manage' && (
+        <ManageScreen
+          vocabulary={vocabulary}
+          masteredIds={masteredIds}
+          onOpenPinModal={() => setIsPinModalOpen(true)}
+          onSelectCardToEdit={handleEditCardFromManage}
+          t={t}
+        />
+      )}
+
+      {/* Fixed Bottom Navigation Bar */}
+      <Navbar currentScreen={screen} onSelectScreen={setScreen} t={t} />
 
       {/* PIN Verification Modal (2026 PIN) */}
       <PinModal
@@ -403,13 +483,6 @@ export function App() {
         onDeleteCategory={handleDeleteCategory}
         t={t}
       />
-
-      {/* Footer Branding */}
-      <footer className="text-center text-xs text-[#0F214A]/60 font-semibold mt-2">
-        <p className="flex items-center justify-center gap-1">
-          Crafted with <Waves className="w-3.5 h-3.5 text-[#1D52B8] inline" /> for Surf Instructors & English Surf Learners
-        </p>
-      </footer>
     </div>
   );
 }

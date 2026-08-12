@@ -1,6 +1,19 @@
 export type Language = 'en' | 'th';
 
 const en = {
+  // Navigation Tabs
+  tabHome: 'Home',
+  tabStudy: 'Study',
+  tabManage: 'Manage',
+
+  // Home Screen
+  welcomeTitle: 'Welcome Back',
+  todayBannerTitle: 'Continue Learning',
+  learnedCountLabel: 'Learned',
+  totalCountLabel: 'Total Terms',
+  categoriesHeader: 'Categories',
+  goButton: 'GO',
+
   // Header & Quick Actions
   addManageCards: 'Add / Manage Cards',
   starred: 'Starred',
@@ -35,7 +48,7 @@ const en = {
   next: 'Next',
   shuffle: 'Shuffle',
   speed: 'Speed:',
-  swipeNotice: 'Swipe cards to navigate',
+  swipeNotice: 'Swipe left/right to change card',
   speedSlow: '0.8x Slow',
   speedNormal: '1.0x Normal',
   speedFast: '1.2x Fast',
@@ -84,6 +97,19 @@ const en = {
 export type TranslationKeys = typeof en;
 
 const th: TranslationKeys = {
+  // Navigation Tabs
+  tabHome: 'หน้าแรก',
+  tabStudy: 'ฝึกคำศัพท์',
+  tabManage: 'จัดการการ์ด',
+
+  // Home Screen
+  welcomeTitle: 'สวัสดี ยินดีต้อนรับ',
+  todayBannerTitle: 'เรียนต่อจากเดิม',
+  learnedCountLabel: 'เรียนรู้แล้ว',
+  totalCountLabel: 'คำศัพท์ทั้งหมด',
+  categoriesHeader: 'หมวดหมู่',
+  goButton: 'GO',
+
   // Header & Quick Actions
   addManageCards: 'เพิ่ม / จัดการการ์ด',
   starred: 'ติดดาว',
@@ -102,7 +128,7 @@ const th: TranslationKeys = {
   swipeOrTap: 'ปัดหรือแตะการ์ด',
   englishFront: 'ด้านหน้า (อังกฤษ)',
   thaiBack: 'ด้านหลัง (ไทย)',
-  tapToFlip: 'แตะเพื่อพลิกการ์ด',
+  tapToFlip: 'แตะการ์ดเพื่อดูคำแปล',
   tapToFlipBack: 'แตะเพื่อพลิกกลับ',
   thaiMeaningHeader: 'ความหมาย (Thai Meaning)',
   thaiPhoneticHeader: 'คำอ่านออกเสียง (Thai Phonetic)',
@@ -117,8 +143,8 @@ const th: TranslationKeys = {
   prev: 'ก่อนหน้า',
   next: 'ถัดไป',
   shuffle: 'สุ่มการ์ด',
-  speed: 'ความเร็ว:',
-  swipeNotice: 'ปัดการ์ดเพื่อเปลี่ยนหน้า',
+  speed: 'ความเร็วเสียง:',
+  swipeNotice: 'ปัดซ้ายขวาเพื่อเปลี่ยนการ์ด',
   speedSlow: '0.8x ช้า',
   speedNormal: '1.0x ปกติ',
   speedFast: '1.2x เร็ว',
@@ -144,7 +170,7 @@ const th: TranslationKeys = {
   tabEditCard: 'แก้ไขการ์ด',
   tabCategories: 'หมวดหมู่',
   resetDefaults: 'คืนค่าเริ่มต้น',
-  searchPlaceholder: 'ค้นหาการ์ดด้วยภาษาอังกฤษ ภาษาไทย หรือหมวดหมู่...',
+  searchPlaceholder: 'ค้นหาคำศัพท์...',
   noCardsFound: 'ไม่พบการ์ดตรงตามคำค้นหา',
   createCardTitle: 'สร้างแฟลชการ์ดใหม่',
   editCardTitle: 'กำลังแก้ไข:',

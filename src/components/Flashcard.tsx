@@ -1,15 +1,5 @@
 import React, { useRef } from 'react';
-import {
-  Volume2,
-  Bookmark,
-  RotateCw,
-  Lightbulb,
-  CheckCircle2,
-  Volume1,
-  MessageSquareQuote,
-  Languages,
-  HandMetal
-} from 'lucide-react';
+import { Star, Check, Play, Volume1 } from 'lucide-react';
 import type { SurfVocabulary } from '../data/surfVocabulary';
 import type { TranslationKeys } from '../data/translations';
 
@@ -25,6 +15,7 @@ interface FlashcardProps {
   onToggleMastered: (id: string) => void;
   onSwipeNext?: () => void;
   onSwipePrev?: () => void;
+  frontLang?: 'EN' | 'TH';
   t: TranslationKeys;
 }
 
@@ -40,6 +31,7 @@ export const Flashcard: React.FC<FlashcardProps> = ({
   onToggleMastered,
   onSwipeNext,
   onSwipePrev,
+  frontLang = 'EN',
   t
 }) => {
   // Swipe Gesture & Mobile Haptics
@@ -106,17 +98,15 @@ export const Flashcard: React.FC<FlashcardProps> = ({
     onToggleMastered(card.id);
   };
 
-  return (
-    <div className="w-full max-w-2xl mx-auto px-3 my-2 no-select">
-      {/* Mobile Swipe Guidance bar above card */}
-      <div className="flex items-center justify-between text-[10px] text-[#0F214A]/60 font-semibold px-2 mb-1">
-        <span>{t.swipePrev}</span>
-        <span className="text-[#1D52B8] font-bold flex items-center gap-1">
-          <HandMetal className="w-3 h-3 text-[#1D52B8]" /> {t.swipeOrTap}
-        </span>
-        <span>{t.swipeNext}</span>
-      </div>
+  const frontLabel = frontLang === 'EN' ? 'ENGLISH' : t.thaiMeaningHeader;
+  const frontWord = frontLang === 'EN' ? card.english : card.thaiMeaning;
+  const frontFontSize = frontLang === 'EN' ? 'text-3xl sm:text-4xl' : 'text-xl sm:text-2xl';
 
+  const backLabel = frontLang === 'EN' ? 'THAI MEANING' : 'ENGLISH';
+  const backWord = frontLang === 'EN' ? card.thaiMeaning : card.english;
+
+  return (
+    <div className="w-full max-w-md mx-auto px-4 my-2 no-select">
       {/* Perspective Container */}
       <div
         className="perspective-1000 w-full"
@@ -127,165 +117,129 @@ export const Flashcard: React.FC<FlashcardProps> = ({
         {/* Card Inner 3D Container */}
         <div
           onClick={handleFlipClick}
-          className={`relative w-full min-h-[440px] sm:min-h-[460px] rounded-3xl transition-transform duration-700 transform-style-3d cursor-pointer shadow-xl ${
+          className={`relative w-full min-h-[420px] rounded-[28px] transition-transform duration-700 transform-style-3d cursor-pointer shadow-xl ${
             isFlipped ? 'rotate-y-180' : ''
           }`}
         >
-          {/* ================= FRONT SIDE ================= */}
-          <div className="absolute inset-0 w-full h-full rounded-3xl p-5 sm:p-8 backface-hidden glass-card-front flex flex-col justify-between overflow-hidden bg-white">
-            {/* Top Bar: Category Pill & Star/Mastered */}
+          {/* ================= FRONT SIDE (White Card) ================= */}
+          <div className="absolute inset-0 w-full h-full rounded-[28px] p-6 backface-hidden glass-card-front flex flex-col justify-between overflow-hidden bg-white border border-[#0B1F3B]/12">
+            {/* Top Bar: Category Pill & Star / Mastered Actions */}
             <div className="flex items-center justify-between z-10">
-              <div className="flex items-center gap-1.5 flex-wrap">
-                <span className="px-3 py-1 text-xs font-black rounded-xl bg-[#1D52B8] text-white shadow-sm">
-                  {card.category}
-                </span>
-              </div>
+              <span className="px-3 py-1 text-xs font-bold rounded-full bg-[#F6F1EA] text-[#0B1F3B]/80 border border-[#0B1F3B]/10">
+                {card.category}
+              </span>
 
-              {/* Action Buttons */}
               <div className="flex items-center gap-2">
-                {/* Star Button */}
+                {/* Bookmark / Star Button */}
                 <button
                   onClick={handleStarClick}
-                  className={`w-11 h-11 rounded-xl border flex items-center justify-center transition-all duration-200 active-push ${
+                  className={`w-9 h-9 rounded-full border flex items-center justify-center transition-all active-push ${
                     isStarred
-                      ? 'bg-[#E52E2A]/15 border-[#E52E2A] text-[#E52E2A] shadow-sm'
-                      : 'bg-[#FAF8F5] border-[#0F214A]/20 text-[#0F214A]/50 hover:text-[#E52E2A]'
+                      ? 'bg-[#EB6F43] border-[#EB6F43] text-white shadow-sm'
+                      : 'bg-transparent border-[#0B1F3B]/15 text-[#0B1F3B]/40 hover:text-[#EB6F43]'
                   }`}
                   title={isStarred ? 'Remove bookmark' : 'Bookmark card'}
                 >
-                  <Bookmark className={`w-5 h-5 ${isStarred ? 'fill-[#E52E2A] text-[#E52E2A]' : ''}`} />
+                  <Star className={`w-4 h-4 ${isStarred ? 'fill-white text-white' : ''}`} />
                 </button>
 
-                {/* Mastered Button */}
+                {/* Learned / Mastered Button */}
                 <button
                   onClick={handleMasteredClick}
-                  className={`w-11 h-11 rounded-xl border flex items-center justify-center transition-all duration-200 active-push ${
+                  className={`w-9 h-9 rounded-full border flex items-center justify-center transition-all active-push ${
                     isMastered
-                      ? 'bg-[#1D52B8]/15 border-[#1D52B8] text-[#1D52B8] shadow-sm'
-                      : 'bg-[#FAF8F5] border-[#0F214A]/20 text-[#0F214A]/50 hover:text-[#1D52B8]'
+                      ? 'bg-[#0B1F3B] border-[#0B1F3B] text-white shadow-sm'
+                      : 'bg-transparent border-[#0B1F3B]/15 text-[#0B1F3B]/40 hover:text-[#0B1F3B]'
                   }`}
-                  title={isMastered ? 'Mark as reviewing' : 'Mark as mastered'}
+                  title={isMastered ? 'Mark as reviewing' : 'Mark as learned'}
                 >
-                  <CheckCircle2 className={`w-5 h-5 ${isMastered ? 'text-[#1D52B8] fill-[#1D52B8]/20' : ''}`} />
+                  <Check className="w-4 h-4" />
                 </button>
               </div>
             </div>
 
-            {/* Main Center Content: English Term */}
-            <div className="my-auto text-center py-4 z-10 flex flex-col items-center justify-center">
-              <span className="text-[11px] uppercase tracking-widest text-[#E52E2A] font-black mb-2">
-                {t.englishTerminologyBadge}
-              </span>
-              <h2 className="text-3xl sm:text-5xl font-black text-[#0F214A] tracking-tight mb-4 px-2 leading-tight">
-                {card.english}
+            {/* Main Center Content: Term & Listen Audio */}
+            <div className="my-auto text-center py-4 z-10 flex flex-col items-center justify-center gap-4">
+              <span className="lb-micro tracking-widest">{frontLabel}</span>
+
+              <h2 className={`${frontFontSize} font-bold text-[#0B1F3B] leading-tight px-2`}>
+                {frontWord}
               </h2>
 
-              {/* Quick Pronounce Button */}
               <button
                 onClick={handleAudioClick}
-                className={`mt-1 inline-flex items-center gap-2 px-6 py-3 rounded-2xl font-bold text-sm transition-all duration-200 shadow-md active-push ${
+                className={`mt-2 inline-flex items-center gap-2 px-5 py-2.5 rounded-full font-bold text-xs transition-all shadow-md active-push ${
                   isSpeaking
-                    ? 'bg-[#E52E2A] text-white scale-105 animate-pulse'
-                    : 'bg-[#1D52B8] text-white hover:bg-[#17449E]'
+                    ? 'bg-[#EB6F43] text-white scale-105 animate-pulse'
+                    : 'bg-[#EB6F43] text-white hover:bg-[#D85F35]'
                 }`}
               >
                 {isSpeaking ? (
                   <>
-                    <Volume1 className="w-5 h-5 animate-spin text-white" />
+                    <Volume1 className="w-4 h-4 animate-spin text-white" />
                     <span>{t.speaking}</span>
                   </>
                 ) : (
                   <>
-                    <Volume2 className="w-5 h-5 text-white" />
+                    <Play className="w-3.5 h-3.5 fill-white text-white" />
                     <span>{t.listenAudio}</span>
                   </>
                 )}
               </button>
             </div>
 
-            {/* Bottom Mobile Cue: Tap to Flip */}
-            <div className="flex items-center justify-between text-xs text-[#0F214A]/60 border-t border-[#0F214A]/10 pt-3 z-10 font-bold">
-              <span className="flex items-center gap-1 text-[#1D52B8]">
-                <Languages className="w-3.5 h-3.5" /> {t.englishFront}
-              </span>
-              <div className="flex items-center gap-1.5 font-bold bg-[#E52E2A]/10 text-[#E52E2A] px-3 py-1.5 rounded-full border border-[#E52E2A]/30">
-                <RotateCw className="w-3.5 h-3.5 text-[#E52E2A]" />
-                <span>{t.tapToFlip}</span>
-              </div>
+            {/* Bottom Mobile Cue */}
+            <div className="text-center text-xs text-[#0B1F3B]/45 font-medium z-10">
+              {t.tapToFlip}
             </div>
           </div>
 
-          {/* ================= BACK SIDE ================= */}
-          <div className="absolute inset-0 w-full h-full rounded-3xl p-5 sm:p-8 backface-hidden rotate-y-180 glass-card-back flex flex-col justify-between overflow-hidden bg-[#FAF8F5]">
-            {/* Top Bar: Thai Header & Audio */}
-            <div className="flex items-center justify-between z-10 border-b border-[#0F214A]/10 pb-2.5">
-              <div className="flex items-center gap-2">
-                <span className="px-3 py-1 text-xs font-black rounded-lg bg-[#E52E2A] text-white">
-                  {t.thaiTranslationBadge}
-                </span>
-              </div>
+          {/* ================= BACK SIDE (Dark Midnight Navy Card) ================= */}
+          <div className="absolute inset-0 w-full h-full rounded-[28px] p-6 backface-hidden rotate-y-180 glass-card-back flex flex-col justify-between overflow-hidden bg-[#0B1F3B] text-white">
+            {/* Top Bar: Thai Badge & Audio */}
+            <div className="flex items-center justify-between z-10">
+              <span className="px-3.5 py-1 text-xs font-semibold rounded-full bg-[#EB6F43] text-white">
+                {t.thaiTranslationBadge}
+              </span>
 
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={handleAudioClick}
-                  className="w-10 h-10 rounded-xl bg-[#1D52B8] text-white flex items-center justify-center active-push shadow-sm hover:bg-[#17449E]"
-                  title="Play native English audio"
-                >
-                  <Volume2 className="w-5 h-5" />
-                </button>
-              </div>
+              <button
+                onClick={handleAudioClick}
+                className="w-9 h-9 rounded-full bg-white/15 text-white flex items-center justify-center active-push hover:bg-white/25 transition-all"
+                title="Listen audio"
+              >
+                <Play className="w-3.5 h-3.5 fill-white text-white" />
+              </button>
             </div>
 
-            {/* Main Center Content: Thai Meaning & Phonetics */}
-            <div className="my-auto py-1 z-10 flex flex-col gap-3">
+            {/* Main Center Content */}
+            <div className="my-auto py-2 z-10 flex flex-col gap-4">
               {/* Thai Meaning */}
-              <div>
-                <span className="text-[11px] uppercase tracking-widest text-[#0F214A]/60 font-bold">{t.thaiMeaningHeader}</span>
-                <h3 className="text-xl sm:text-3xl font-black text-[#0F214A] mt-0.5 leading-snug">
-                  {card.thaiMeaning}
+              <div className="flex flex-col gap-1">
+                <span className="lb-micro text-white/50">{backLabel}</span>
+                <h3 className="text-xl sm:text-2xl font-bold text-white leading-snug">
+                  {backWord}
                 </h3>
               </div>
 
-              {/* Phonetic Pronunciation Guide */}
-              <div className="bg-white p-3.5 rounded-2xl border border-[#1D52B8]/25 shadow-sm">
-                <span className="text-[11px] uppercase tracking-wider text-[#1D52B8] font-black flex items-center gap-1 mb-0.5">
-                  <Volume2 className="w-3.5 h-3.5 text-[#1D52B8]" />
-                  {t.thaiPhoneticHeader}
-                </span>
-                <p className="text-lg sm:text-2xl font-black text-[#0F214A] tracking-wide">
-                  "{card.thaiPhonetic}"
-                </p>
-              </div>
-
-              {/* Example Sentence */}
-              <div className="bg-white p-3.5 rounded-2xl border border-[#0F214A]/15 shadow-sm">
-                <span className="text-[11px] uppercase tracking-wider text-[#E52E2A] font-black flex items-center gap-1 mb-1">
-                  <MessageSquareQuote className="w-3.5 h-3.5 text-[#E52E2A]" />
-                  {t.exampleSentenceHeader}
-                </span>
-                <p className="text-xs sm:text-base text-[#0F214A]/90 font-medium italic leading-relaxed">
-                  "{card.example}"
-                </p>
-              </div>
-
-              {/* Surf Teaching Tip (if available) */}
-              {card.surfTip && (
-                <div className="flex items-start gap-2 text-[11px] bg-[#E52E2A]/10 text-[#0F214A] p-2.5 rounded-xl border border-[#E52E2A]/25">
-                  <Lightbulb className="w-4 h-4 text-[#E52E2A] shrink-0 mt-0.5" />
-                  <span><strong className="font-bold text-[#E52E2A]">{t.surfTipHeader}</strong> {card.surfTip}</span>
+              {/* Thai Phonetic */}
+              {card.thaiPhonetic && (
+                <div className="border-t border-white/14 pt-3 flex flex-col gap-1">
+                  <span className="lb-micro text-white/50">THAI PHONETIC</span>
+                  <p className="text-base sm:text-lg font-semibold text-white">
+                    {card.thaiPhonetic}
+                  </p>
                 </div>
               )}
-            </div>
 
-            {/* Bottom Mobile Cue: Back Side Indicator */}
-            <div className="flex items-center justify-between text-xs text-[#0F214A]/60 border-t border-[#0F214A]/10 pt-2.5 z-10 font-bold">
-              <span className="flex items-center gap-1 text-[#E52E2A]">
-                <Languages className="w-3.5 h-3.5" /> {t.thaiBack}
-              </span>
-              <div className="flex items-center gap-1.5 font-bold text-[#1D52B8] bg-white px-3 py-1.5 rounded-full border border-[#1D52B8]/30">
-                <RotateCw className="w-3.5 h-3.5" />
-                <span>{t.tapToFlipBack}</span>
-              </div>
+              {/* Example Sentence */}
+              {card.example && (
+                <div className="border-t border-white/14 pt-3 flex flex-col gap-1">
+                  <span className="lb-micro text-white/50">EXAMPLE</span>
+                  <p className="text-xs sm:text-sm text-white/85 italic leading-relaxed">
+                    "{card.example}"
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         </div>
