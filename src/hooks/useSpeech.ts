@@ -1,46 +1,15 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 
-export interface ElevenLabsVoiceOption {
-  id: string;
-  name: string;
-  description: string;
-  gender: 'Female' | 'Male';
-}
-
 const DEFAULT_API_KEY = 'sk_a94d385d4d9c20169d80025a3593d71275974e691fae7518';
-const CHARLIE_VOICE_ID = 'IKne3meq5aSn9XLyUdCD';
-
-export const ELEVEN_LABS_VOICES: ElevenLabsVoiceOption[] = [
-  { id: CHARLIE_VOICE_ID, name: 'Charlie', description: 'Casual, friendly & conversational male (Default)', gender: 'Male' },
-  { id: '21m00Tcm4TlvDq8ikWAM', name: 'Rachel', description: 'Warm, natural & clear female', gender: 'Female' },
-  { id: 'pNInz6obpgDQGcFmaJgB', name: 'Adam', description: 'Deep, encouraging male', gender: 'Male' }
-];
+const DEREK_VOICE_ID = '48PZ3DWeaUaOsuopUYms'; // Derek - ElevenLabs Studio Voice
 
 export function useSpeech() {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [rate, setRate] = useState<number>(1.0);
 
-  // ElevenLabs State initialized with default API Key and Charlie's Voice ID
-  const [apiKey, setApiKey] = useState<string>(() => {
-    try {
-      return (
-        localStorage.getItem('surf_flashcard_elevenlabs_key') ||
-        DEFAULT_API_KEY
-      );
-    } catch {
-      return DEFAULT_API_KEY;
-    }
-  });
-
-  const [voiceId, setVoiceId] = useState<string>(() => {
-    try {
-      return localStorage.getItem('surf_flashcard_elevenlabs_voice') || CHARLIE_VOICE_ID;
-    } catch {
-      return CHARLIE_VOICE_ID;
-    }
-  });
-
-  const [isElevenLabsActive, setIsElevenLabsActive] = useState<boolean>(() => !!apiKey.trim());
+  // ElevenLabs State initialized with default API Key and Derek's Voice ID
+  const [apiKey] = useState<string>(DEFAULT_API_KEY);
+  const [voiceId] = useState<string>(DEREK_VOICE_ID);
 
   // Web Speech Fallback State
   const synthRef = useRef<SpeechSynthesis | null>(null);
@@ -49,28 +18,6 @@ export function useSpeech() {
   // Audio Playback & Quota Cache Ref
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const cacheRef = useRef<Map<string, string>>(new Map());
-
-  // Save API Key
-  const saveApiKey = useCallback((key: string) => {
-    const trimmed = key.trim() || DEFAULT_API_KEY;
-    setApiKey(trimmed);
-    setIsElevenLabsActive(!!trimmed);
-    try {
-      localStorage.setItem('surf_flashcard_elevenlabs_key', trimmed);
-    } catch (e) {
-      console.error('Failed to save ElevenLabs API key', e);
-    }
-  }, []);
-
-  // Save Voice ID
-  const saveVoiceId = useCallback((id: string) => {
-    setVoiceId(id);
-    try {
-      localStorage.setItem('surf_flashcard_elevenlabs_voice', id);
-    } catch (e) {
-      console.error('Failed to save ElevenLabs Voice ID', e);
-    }
-  }, []);
 
   // Initialize Web Speech API Fallback
   useEffect(() => {
@@ -86,6 +33,7 @@ export function useSpeech() {
           englishVoices.find(
             (v) =>
               v.name.includes('Daniel') ||
+              v.name.includes('Alex') ||
               v.name.includes('Google') ||
               v.name.includes('Natural') ||
               v.name.includes('Samantha')
@@ -140,14 +88,12 @@ export function useSpeech() {
     [rate, selectedWebVoice]
   );
 
-  // Main Speak Function (ElevenLabs API using Charlie's voice with session cache & WebSpeech fallback)
+  // Main Speak Function (ElevenLabs API using Derek's voice with session cache & WebSpeech fallback)
   const speak = useCallback(
     async (text: string) => {
       stop();
 
-      const activeKey = apiKey.trim() || DEFAULT_API_KEY;
-      const activeVoice = voiceId || CHARLIE_VOICE_ID;
-      const cacheKey = `${text}_${activeVoice}_${rate}`;
+      const cacheKey = `${text}_${voiceId}_${rate}`;
 
       // Check session cache to save ElevenLabs character quota
       if (cacheRef.current.has(cacheKey)) {
@@ -167,14 +113,14 @@ export function useSpeech() {
         return;
       }
 
-      // Call ElevenLabs Text-to-Speech API
+      // Call ElevenLabs Text-to-Speech API (Derek Voice)
       try {
         setIsSpeaking(true);
-        const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${activeVoice}`, {
+        const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'xi-api-key': activeKey
+            'xi-api-key': apiKey
           },
           body: JSON.stringify({
             text,
@@ -224,9 +170,6 @@ export function useSpeech() {
     rate,
     setRate,
     apiKey,
-    saveApiKey,
-    voiceId,
-    saveVoiceId,
-    isElevenLabsActive
+    voiceId
   };
 }

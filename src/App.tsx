@@ -17,10 +17,9 @@ import { PhrasesScreen } from './components/PhrasesScreen';
 import { ManageScreen } from './components/ManageScreen';
 import { PinModal } from './components/PinModal';
 import { CardManagerModal } from './components/CardManagerModal';
-import { ElevenLabsModal } from './components/ElevenLabsModal';
 
 import { useSpeech } from './hooks/useSpeech';
-import { BookMarked, RefreshCcw, Globe, Sparkles } from 'lucide-react';
+import { BookMarked, RefreshCcw, Globe } from 'lucide-react';
 
 export function App() {
   const [screen, setScreen] = useState<ScreenType>('home');
@@ -126,20 +125,8 @@ export function App() {
   // Modals
   const [isPinModalOpen, setIsPinModalOpen] = useState(false);
   const [isCardManagerOpen, setIsCardManagerOpen] = useState(false);
-  const [isElevenLabsModalOpen, setIsElevenLabsModalOpen] = useState(false);
 
-  const {
-    speak,
-    stop,
-    isSpeaking,
-    rate,
-    setRate,
-    apiKey,
-    saveApiKey,
-    voiceId,
-    saveVoiceId,
-    isElevenLabsActive
-  } = useSpeech();
+  const { speak, stop, isSpeaking, rate, setRate } = useSpeech();
 
   // Storage Effects (v2 Keys)
   useEffect(() => {
@@ -350,7 +337,7 @@ export function App() {
   // Keyboard navigation shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (isPinModalOpen || isCardManagerOpen || isElevenLabsModalOpen) return;
+      if (isPinModalOpen || isCardManagerOpen) return;
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
 
       if (e.key === 'ArrowRight') {
@@ -372,7 +359,7 @@ export function App() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleNext, handlePrev, speak, currentCard, isPinModalOpen, isCardManagerOpen, isElevenLabsModalOpen]);
+  }, [handleNext, handlePrev, speak, currentCard, isPinModalOpen, isCardManagerOpen]);
 
   const progressPct =
     filteredCards.length > 0 ? Math.round(((currentIndex + 1) / filteredCards.length) * 100) : 0;
@@ -408,19 +395,6 @@ export function App() {
             </div>
 
             <div className="flex items-center gap-2">
-              {/* ElevenLabs AI Voice Trigger */}
-              <button
-                onClick={() => setIsElevenLabsModalOpen(true)}
-                className={`p-2 rounded-full border font-bold text-xs active-push shadow-xs cursor-pointer flex items-center gap-1 ${
-                  isElevenLabsActive
-                    ? 'bg-[#EB6F43] text-white border-[#EB6F43]'
-                    : 'bg-white text-[#0B1F3B] border-[#0B1F3B]/15 hover:border-[#EB6F43]'
-                }`}
-                title="ElevenLabs AI Studio Voice Settings"
-              >
-                <Sparkles className="w-4 h-4" />
-              </button>
-
               {/* Front Card Language Toggle */}
               <button
                 onClick={() => setFrontCardLang((prev) => (prev === 'EN' ? 'TH' : 'EN'))}
@@ -574,19 +548,6 @@ export function App() {
         onResetVocabulary={handleResetVocabulary}
         onAddCategory={handleAddCategory}
         onDeleteCategory={handleDeleteCategory}
-        t={t}
-      />
-
-      {/* ElevenLabs AI Voice Modal */}
-      <ElevenLabsModal
-        isOpen={isElevenLabsModalOpen}
-        onClose={() => setIsElevenLabsModalOpen(false)}
-        apiKey={apiKey}
-        onSaveApiKey={saveApiKey}
-        voiceId={voiceId}
-        onSaveVoiceId={saveVoiceId}
-        onTestSpeak={speak}
-        isSpeaking={isSpeaking}
         t={t}
       />
     </div>
