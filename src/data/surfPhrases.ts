@@ -6,6 +6,7 @@ export interface SurfPhrase {
   thaiPhonetic: string;
   context?: string;
   audioText?: string;
+  displayOrder?: number;
 }
 
 export const DEFAULT_PHRASE_CATEGORIES = [

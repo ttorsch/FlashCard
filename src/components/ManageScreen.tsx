@@ -1,6 +1,8 @@
 import React, { useState, useMemo } from 'react';
-import { Search, Plus, Edit2, ChevronDown, ChevronRight, BookOpen, MessageSquareQuote } from 'lucide-react';
+import { Search, Plus, Edit2, ChevronDown, ChevronRight, BookOpen, MessageSquareQuote, ArrowUp, ArrowDown } from 'lucide-react';
+import { DEFAULT_CATEGORIES } from '../data/surfVocabulary';
 import type { SurfVocabulary } from '../data/surfVocabulary';
+import { DEFAULT_PHRASE_CATEGORIES } from '../data/surfPhrases';
 import type { SurfPhrase } from '../data/surfPhrases';
 import type { TranslationKeys } from '../data/translations';
 
@@ -11,6 +13,8 @@ interface ManageScreenProps {
   onOpenPinModal: () => void;
   onSelectCardToEdit: (card: SurfVocabulary) => void;
   onSelectPhraseToEdit?: (phrase: SurfPhrase) => void;
+  onMovePhrase?: (phraseId: string, direction: 'up' | 'down') => void;
+  onMoveCard?: (cardId: string, direction: 'up' | 'down') => void;
   t: TranslationKeys;
 }
 
@@ -21,6 +25,8 @@ export const ManageScreen: React.FC<ManageScreenProps> = ({
   onOpenPinModal,
   onSelectCardToEdit,
   onSelectPhraseToEdit,
+  onMovePhrase,
+  onMoveCard,
   t
 }) => {
   const [manageMode, setManageMode] = useState<'vocab' | 'phrases'>('vocab');
@@ -34,12 +40,24 @@ export const ManageScreen: React.FC<ManageScreenProps> = ({
 
   // Unique categories list for pill filter bar
   const currentCategories = useMemo(() => {
+    const defaultList = manageMode === 'vocab' ? DEFAULT_CATEGORIES : DEFAULT_PHRASE_CATEGORIES;
     const source = manageMode === 'vocab' ? vocabulary : phrases;
-    const cats = Array.from(new Set(source.map((item) => item.category || 'General')));
-    return ['All', ...cats.sort((a, b) => a.localeCompare(b))];
+    const catsInUse = Array.from(new Set(source.map((item) => item.category || 'General')));
+
+    // Sort categories according to default lesson sequence
+    const sortedCats = catsInUse.sort((a, b) => {
+      const idxA = defaultList.indexOf(a);
+      const idxB = defaultList.indexOf(b);
+      if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+      if (idxA !== -1) return -1;
+      if (idxB !== -1) return 1;
+      return a.localeCompare(b);
+    });
+
+    return ['All', ...sortedCats];
   }, [manageMode, vocabulary, phrases]);
 
-  // Filtered vocabulary cards
+  // Filtered vocabulary cards preserving order
   const filteredCards = useMemo(() => {
     return vocabulary.filter((c) => {
       const matchesCat = selectedCategory === 'All' || c.category === selectedCategory;
@@ -52,7 +70,7 @@ export const ManageScreen: React.FC<ManageScreenProps> = ({
     });
   }, [vocabulary, selectedCategory, query]);
 
-  // Filtered phrases
+  // Filtered phrases preserving order
   const filteredPhrases = useMemo(() => {
     return phrases.filter((p) => {
       const matchesCat = selectedCategory === 'All' || p.category === selectedCategory;
@@ -65,7 +83,7 @@ export const ManageScreen: React.FC<ManageScreenProps> = ({
     });
   }, [phrases, selectedCategory, query]);
 
-  // Group vocabulary cards by category
+  // Group vocabulary cards by category preserving lesson category order
   const groupedCards = useMemo(() => {
     const groups: Record<string, SurfVocabulary[]> = {};
     filteredCards.forEach((card) => {
@@ -76,15 +94,22 @@ export const ManageScreen: React.FC<ManageScreenProps> = ({
       groups[cat].push(card);
     });
 
-    const sortedCategoryNames = Object.keys(groups).sort((a, b) => a.localeCompare(b));
+    const categoryNames = Object.keys(groups).sort((a, b) => {
+      const idxA = DEFAULT_CATEGORIES.indexOf(a);
+      const idxB = DEFAULT_CATEGORIES.indexOf(b);
+      if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+      if (idxA !== -1) return -1;
+      if (idxB !== -1) return 1;
+      return a.localeCompare(b);
+    });
 
-    return sortedCategoryNames.map((catName) => ({
+    return categoryNames.map((catName) => ({
       categoryName: catName,
       items: groups[catName]
     }));
   }, [filteredCards]);
 
-  // Group phrases by category
+  // Group phrases by category preserving lesson category order
   const groupedPhrases = useMemo(() => {
     const groups: Record<string, SurfPhrase[]> = {};
     filteredPhrases.forEach((phrase) => {
@@ -95,9 +120,16 @@ export const ManageScreen: React.FC<ManageScreenProps> = ({
       groups[cat].push(phrase);
     });
 
-    const sortedCategoryNames = Object.keys(groups).sort((a, b) => a.localeCompare(b));
+    const categoryNames = Object.keys(groups).sort((a, b) => {
+      const idxA = DEFAULT_PHRASE_CATEGORIES.indexOf(a);
+      const idxB = DEFAULT_PHRASE_CATEGORIES.indexOf(b);
+      if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+      if (idxA !== -1) return -1;
+      if (idxB !== -1) return 1;
+      return a.localeCompare(b);
+    });
 
-    return sortedCategoryNames.map((catName) => ({
+    return categoryNames.map((catName) => ({
       categoryName: catName,
       items: groups[catName]
     }));
@@ -223,9 +255,11 @@ export const ManageScreen: React.FC<ManageScreenProps> = ({
 
               {/* Group Container Box */}
               <div className="bg-white rounded-3xl border border-[#0B1F3B]/10 shadow-xs divide-y divide-[#0B1F3B]/8 overflow-hidden">
-                {group.items.map((card) => {
+                {group.items.map((card, itemIdx) => {
                   const isExpanded = expandedItemId === card.id;
                   const isLearned = masteredIds.includes(card.id);
+                  const isFirstInGroup = itemIdx === 0;
+                  const isLastInGroup = itemIdx === group.items.length - 1;
 
                   return (
                     <div key={card.id} className="p-4 flex flex-col gap-2.5">
@@ -259,7 +293,7 @@ export const ManageScreen: React.FC<ManageScreenProps> = ({
                         </div>
                       </div>
 
-                      {/* Expanded View: Thai Meaning & Example */}
+                      {/* Expanded View: Thai Meaning, Example & Position Re-order Controls */}
                       {isExpanded && (
                         <div className="pt-1 flex flex-col gap-2.5 animate-fadeIn">
                           <p className="text-xs text-[#0B1F3B]/80 font-medium leading-relaxed">
@@ -272,8 +306,36 @@ export const ManageScreen: React.FC<ManageScreenProps> = ({
                             </div>
                           )}
 
-                          {/* Action Pill Button */}
-                          <div className="flex items-center gap-2 pt-1">
+                          {/* Action Pill Buttons with Move Position Up / Down */}
+                          <div className="flex items-center justify-between gap-2 pt-1 border-t border-[#0B1F3B]/8 mt-1">
+                            <div className="flex items-center gap-1.5">
+                              <button
+                                disabled={isFirstInGroup}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (onMoveCard) onMoveCard(card.id, 'up');
+                                }}
+                                className="px-2.5 py-1.5 rounded-full bg-[#0B1F3B]/6 hover:bg-[#0B1F3B]/12 text-[#0B1F3B] font-bold text-xs transition-all cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed flex items-center gap-1"
+                                title="Move Up"
+                              >
+                                <ArrowUp className="w-3 h-3 text-[#EB6F43]" />
+                                <span className="text-[10px]">Up</span>
+                              </button>
+
+                              <button
+                                disabled={isLastInGroup}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (onMoveCard) onMoveCard(card.id, 'down');
+                                }}
+                                className="px-2.5 py-1.5 rounded-full bg-[#0B1F3B]/6 hover:bg-[#0B1F3B]/12 text-[#0B1F3B] font-bold text-xs transition-all cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed flex items-center gap-1"
+                                title="Move Down"
+                              >
+                                <ArrowDown className="w-3 h-3 text-[#EB6F43]" />
+                                <span className="text-[10px]">Down</span>
+                              </button>
+                            </div>
+
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
@@ -319,9 +381,11 @@ export const ManageScreen: React.FC<ManageScreenProps> = ({
 
               {/* Group Container Box */}
               <div className="bg-white rounded-3xl border border-[#0B1F3B]/10 shadow-xs divide-y divide-[#0B1F3B]/8 overflow-hidden">
-                {group.items.map((phrase) => {
+                {group.items.map((phrase, itemIdx) => {
                   const isExpanded = expandedItemId === phrase.id;
                   const isLearned = masteredIds.includes(phrase.id);
+                  const isFirstInGroup = itemIdx === 0;
+                  const isLastInGroup = itemIdx === group.items.length - 1;
 
                   return (
                     <div key={phrase.id} className="p-4 flex flex-col gap-2.5">
@@ -355,15 +419,43 @@ export const ManageScreen: React.FC<ManageScreenProps> = ({
                         </div>
                       </div>
 
-                      {/* Expanded View: Thai Meaning & Edit Button */}
+                      {/* Expanded View: Thai Meaning & Action Controls */}
                       {isExpanded && (
                         <div className="pt-1 flex flex-col gap-2.5 animate-fadeIn">
                           <p className="text-xs text-[#0B1F3B]/80 font-medium leading-relaxed">
                             {phrase.thaiMeaning}
                           </p>
 
-                          {/* Action Pill Button */}
-                          <div className="flex items-center gap-2 pt-1">
+                          {/* Action Pill Buttons with Move Position Up / Down */}
+                          <div className="flex items-center justify-between gap-2 pt-1 border-t border-[#0B1F3B]/8 mt-1">
+                            <div className="flex items-center gap-1.5">
+                              <button
+                                disabled={isFirstInGroup}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (onMovePhrase) onMovePhrase(phrase.id, 'up');
+                                }}
+                                className="px-2.5 py-1.5 rounded-full bg-[#0B1F3B]/6 hover:bg-[#0B1F3B]/12 text-[#0B1F3B] font-bold text-xs transition-all cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed flex items-center gap-1"
+                                title="Move Up"
+                              >
+                                <ArrowUp className="w-3 h-3 text-[#EB6F43]" />
+                                <span className="text-[10px]">Up</span>
+                              </button>
+
+                              <button
+                                disabled={isLastInGroup}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (onMovePhrase) onMovePhrase(phrase.id, 'down');
+                                }}
+                                className="px-2.5 py-1.5 rounded-full bg-[#0B1F3B]/6 hover:bg-[#0B1F3B]/12 text-[#0B1F3B] font-bold text-xs transition-all cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed flex items-center gap-1"
+                                title="Move Down"
+                              >
+                                <ArrowDown className="w-3 h-3 text-[#EB6F43]" />
+                                <span className="text-[10px]">Down</span>
+                              </button>
+                            </div>
+
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();

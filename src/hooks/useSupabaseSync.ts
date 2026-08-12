@@ -15,7 +15,7 @@ export function useSupabaseSync({ initialVocabulary, initialPhrases }: UseSupaba
   const [isConnected, setIsConnected] = useState(isSupabaseConfigured);
 
   // Helper to map DB row to SurfVocabulary
-  const mapDbToVocab = (row: any): SurfVocabulary => ({
+  const mapDbToVocab = (row: any, fallbackIndex: number): SurfVocabulary => ({
     id: row.id,
     category: row.category,
     english: row.english,
@@ -23,18 +23,20 @@ export function useSupabaseSync({ initialVocabulary, initialPhrases }: UseSupaba
     thaiPhonetic: row.thai_phonetic || '',
     example: row.example || '',
     audioText: row.audio_text || row.english,
-    surfTip: row.surf_tip || ''
+    surfTip: row.surf_tip || '',
+    displayOrder: typeof row.display_order === 'number' ? row.display_order : fallbackIndex
   });
 
   // Helper to map DB row to SurfPhrase
-  const mapDbToPhrase = (row: any): SurfPhrase => ({
+  const mapDbToPhrase = (row: any, fallbackIndex: number): SurfPhrase => ({
     id: row.id,
     category: row.category,
     english: row.english,
     thaiMeaning: row.thai_meaning,
     thaiPhonetic: row.thai_phonetic || '',
     context: row.context || '',
-    audioText: row.audio_text || row.english
+    audioText: row.audio_text || row.english,
+    displayOrder: typeof row.display_order === 'number' ? row.display_order : fallbackIndex
   });
 
   // Initial Fetch & Seed from Supabase
@@ -47,18 +49,21 @@ export function useSupabaseSync({ initialVocabulary, initialPhrases }: UseSupaba
       try {
         setIsSyncing(true);
 
-        // Fetch Vocabulary
+        // Fetch Vocabulary (Order by display_order ascending)
         const { data: dbVocab, error: vocabErr } = await supabase
           .from('vocabulary')
           .select('*')
-          .order('created_at', { ascending: false });
+          .order('display_order', { ascending: true });
 
         if (!vocabErr && dbVocab) {
           if (dbVocab.length > 0) {
-            if (isMounted) setVocabulary(dbVocab.map(mapDbToVocab));
+            if (isMounted) {
+              const mapped = dbVocab.map((row, idx) => mapDbToVocab(row, idx));
+              setVocabulary(mapped);
+            }
           } else {
             // Seed initial vocabulary if DB is empty
-            const seedData = initialVocabulary.map((v) => ({
+            const seedData = initialVocabulary.map((v, idx) => ({
               id: v.id,
               category: v.category,
               english: v.english,
@@ -66,31 +71,36 @@ export function useSupabaseSync({ initialVocabulary, initialPhrases }: UseSupaba
               thai_phonetic: v.thaiPhonetic || '',
               example: v.example || '',
               audio_text: v.audioText || v.english,
-              surf_tip: v.surfTip || ''
+              surf_tip: v.surfTip || '',
+              display_order: idx
             }));
             await supabase.from('vocabulary').insert(seedData);
           }
         }
 
-        // Fetch Phrases
+        // Fetch Phrases (Order by display_order ascending)
         const { data: dbPhrases, error: phraseErr } = await supabase
           .from('phrases')
           .select('*')
-          .order('created_at', { ascending: false });
+          .order('display_order', { ascending: true });
 
         if (!phraseErr && dbPhrases) {
           if (dbPhrases.length > 0) {
-            if (isMounted) setPhrases(dbPhrases.map(mapDbToPhrase));
+            if (isMounted) {
+              const mapped = dbPhrases.map((row, idx) => mapDbToPhrase(row, idx));
+              setPhrases(mapped);
+            }
           } else {
             // Seed initial phrases if DB is empty
-            const seedPhrases = initialPhrases.map((p) => ({
+            const seedPhrases = initialPhrases.map((p, idx) => ({
               id: p.id,
               category: p.category,
               english: p.english,
               thai_meaning: p.thaiMeaning,
               thai_phonetic: p.thaiPhonetic || '',
               context: p.context || '',
-              audio_text: p.audioText || p.english
+              audio_text: p.audioText || p.english,
+              display_order: idx
             }));
             await supabase.from('phrases').insert(seedPhrases);
           }
@@ -114,10 +124,10 @@ export function useSupabaseSync({ initialVocabulary, initialPhrases }: UseSupaba
         { event: '*', schema: 'public', table: 'vocabulary' },
         (payload) => {
           if (payload.eventType === 'INSERT') {
-            const newCard = mapDbToVocab(payload.new);
+            const newCard = mapDbToVocab(payload.new, 0);
             setVocabulary((prev) => [newCard, ...prev.filter((c) => c.id !== newCard.id)]);
           } else if (payload.eventType === 'UPDATE') {
-            const updated = mapDbToVocab(payload.new);
+            const updated = mapDbToVocab(payload.new, 0);
             setVocabulary((prev) => prev.map((c) => (c.id === updated.id ? updated : c)));
           } else if (payload.eventType === 'DELETE') {
             const deletedId = payload.old.id;
@@ -134,10 +144,10 @@ export function useSupabaseSync({ initialVocabulary, initialPhrases }: UseSupaba
         { event: '*', schema: 'public', table: 'phrases' },
         (payload) => {
           if (payload.eventType === 'INSERT') {
-            const newPhrase = mapDbToPhrase(payload.new);
+            const newPhrase = mapDbToPhrase(payload.new, 0);
             setPhrases((prev) => [newPhrase, ...prev.filter((p) => p.id !== newPhrase.id)]);
           } else if (payload.eventType === 'UPDATE') {
-            const updated = mapDbToPhrase(payload.new);
+            const updated = mapDbToPhrase(payload.new, 0);
             setPhrases((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
           } else if (payload.eventType === 'DELETE') {
             const deletedId = payload.old.id;
@@ -158,10 +168,11 @@ export function useSupabaseSync({ initialVocabulary, initialPhrases }: UseSupaba
   const addCard = useCallback(async (cardData: Omit<SurfVocabulary, 'id'>) => {
     const newCard: SurfVocabulary = {
       ...cardData,
-      id: `surf-custom-${Date.now()}`
+      id: `surf-custom-${Date.now()}`,
+      displayOrder: Date.now()
     };
 
-    setVocabulary((prev) => [newCard, ...prev]);
+    setVocabulary((prev) => [...prev, newCard]);
 
     if (isSupabaseConfigured) {
       try {
@@ -173,7 +184,8 @@ export function useSupabaseSync({ initialVocabulary, initialPhrases }: UseSupaba
           thai_phonetic: newCard.thaiPhonetic || '',
           example: newCard.example || '',
           audio_text: newCard.audioText || newCard.english,
-          surf_tip: newCard.surfTip || ''
+          surf_tip: newCard.surfTip || '',
+          display_order: newCard.displayOrder
         });
       } catch (err) {
         console.error('Failed to sync insert to Supabase:', err);
@@ -195,7 +207,8 @@ export function useSupabaseSync({ initialVocabulary, initialPhrases }: UseSupaba
             thai_phonetic: updatedCard.thaiPhonetic || '',
             example: updatedCard.example || '',
             audio_text: updatedCard.audioText || updatedCard.english,
-            surf_tip: updatedCard.surfTip || ''
+            surf_tip: updatedCard.surfTip || '',
+            display_order: updatedCard.displayOrder ?? 0
           })
           .eq('id', updatedCard.id);
       } catch (err) {
@@ -219,10 +232,11 @@ export function useSupabaseSync({ initialVocabulary, initialPhrases }: UseSupaba
   const addPhrase = useCallback(async (phraseData: Omit<SurfPhrase, 'id'>) => {
     const newPhrase: SurfPhrase = {
       ...phraseData,
-      id: `phrase-custom-${Date.now()}`
+      id: `phrase-custom-${Date.now()}`,
+      displayOrder: Date.now()
     };
 
-    setPhrases((prev) => [newPhrase, ...prev]);
+    setPhrases((prev) => [...prev, newPhrase]);
 
     if (isSupabaseConfigured) {
       try {
@@ -233,7 +247,8 @@ export function useSupabaseSync({ initialVocabulary, initialPhrases }: UseSupaba
           thai_meaning: newPhrase.thaiMeaning,
           thai_phonetic: newPhrase.thaiPhonetic || '',
           context: newPhrase.context || '',
-          audio_text: newPhrase.audioText || newPhrase.english
+          audio_text: newPhrase.audioText || newPhrase.english,
+          display_order: newPhrase.displayOrder
         });
       } catch (err) {
         console.error('Failed to sync phrase insert to Supabase:', err);
@@ -254,7 +269,8 @@ export function useSupabaseSync({ initialVocabulary, initialPhrases }: UseSupaba
             thai_meaning: updatedPhrase.thaiMeaning,
             thai_phonetic: updatedPhrase.thaiPhonetic || '',
             context: updatedPhrase.context || '',
-            audio_text: updatedPhrase.audioText || updatedPhrase.english
+            audio_text: updatedPhrase.audioText || updatedPhrase.english,
+            display_order: updatedPhrase.displayOrder ?? 0
           })
           .eq('id', updatedPhrase.id);
       } catch (err) {
@@ -275,6 +291,68 @@ export function useSupabaseSync({ initialVocabulary, initialPhrases }: UseSupaba
     }
   }, []);
 
+  // Re-order Phrase Position Up or Down
+  const movePhrasePosition = useCallback(async (phraseId: string, direction: 'up' | 'down') => {
+    setPhrases((prev) => {
+      const index = prev.findIndex((p) => p.id === phraseId);
+      if (index === -1) return prev;
+      const targetIndex = direction === 'up' ? index - 1 : index + 1;
+      if (targetIndex < 0 || targetIndex >= prev.length) return prev;
+
+      const updated = [...prev];
+      const temp = updated[index];
+      updated[index] = updated[targetIndex];
+      updated[targetIndex] = temp;
+
+      // Assign sequential display orders
+      const reordered = updated.map((item, idx) => ({
+        ...item,
+        displayOrder: idx
+      }));
+
+      // Sync to Supabase in background
+      if (isSupabaseConfigured) {
+        const item1 = reordered[index];
+        const item2 = reordered[targetIndex];
+        supabase.from('phrases').update({ display_order: item1.displayOrder }).eq('id', item1.id).then();
+        supabase.from('phrases').update({ display_order: item2.displayOrder }).eq('id', item2.id).then();
+      }
+
+      return reordered;
+    });
+  }, []);
+
+  // Re-order Vocabulary Position Up or Down
+  const moveCardPosition = useCallback(async (cardId: string, direction: 'up' | 'down') => {
+    setVocabulary((prev) => {
+      const index = prev.findIndex((c) => c.id === cardId);
+      if (index === -1) return prev;
+      const targetIndex = direction === 'up' ? index - 1 : index + 1;
+      if (targetIndex < 0 || targetIndex >= prev.length) return prev;
+
+      const updated = [...prev];
+      const temp = updated[index];
+      updated[index] = updated[targetIndex];
+      updated[targetIndex] = temp;
+
+      // Assign sequential display orders
+      const reordered = updated.map((item, idx) => ({
+        ...item,
+        displayOrder: idx
+      }));
+
+      // Sync to Supabase in background
+      if (isSupabaseConfigured) {
+        const item1 = reordered[index];
+        const item2 = reordered[targetIndex];
+        supabase.from('vocabulary').update({ display_order: item1.displayOrder }).eq('id', item1.id).then();
+        supabase.from('vocabulary').update({ display_order: item2.displayOrder }).eq('id', item2.id).then();
+      }
+
+      return reordered;
+    });
+  }, []);
+
   return {
     vocabulary,
     phrases,
@@ -285,6 +363,8 @@ export function useSupabaseSync({ initialVocabulary, initialPhrases }: UseSupaba
     deleteCard,
     addPhrase,
     editPhrase,
-    deletePhrase
+    deletePhrase,
+    movePhrasePosition,
+    moveCardPosition
   };
 }

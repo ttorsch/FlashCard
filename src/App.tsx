@@ -77,7 +77,9 @@ export function App() {
     deleteCard: handleDeleteCard,
     addPhrase: handleAddPhrase,
     editPhrase: handleEditPhrase,
-    deletePhrase: handleDeletePhrase
+    deletePhrase: handleDeletePhrase,
+    movePhrasePosition,
+    moveCardPosition
   } = useSupabaseSync({
     initialVocabulary,
     initialPhrases
@@ -506,6 +508,8 @@ export function App() {
           }}
           onSelectCardToEdit={handleEditCardFromManage}
           onSelectPhraseToEdit={handleEditPhraseFromManage}
+          onMovePhrase={movePhrasePosition}
+          onMoveCard={moveCardPosition}
           t={t}
         />
       )}

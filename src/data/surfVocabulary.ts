@@ -7,6 +7,7 @@ export interface SurfVocabulary {
   example: string;
   audioText: string;
   surfTip?: string;
+  displayOrder?: number;
 }
 
 export const DEFAULT_CATEGORIES = [
