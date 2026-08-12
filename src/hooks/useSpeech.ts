@@ -7,36 +7,36 @@ export interface ElevenLabsVoiceOption {
   gender: 'Female' | 'Male';
 }
 
+const DEFAULT_API_KEY = 'sk_a94d385d4d9c20169d80025a3593d71275974e691fae7518';
+const CHARLIE_VOICE_ID = 'IKne3meq5aSn9XLyUdCD';
+
 export const ELEVEN_LABS_VOICES: ElevenLabsVoiceOption[] = [
-  { id: '21m00Tcm4TlvDq8ikWAM', name: 'Rachel', description: 'Warm, natural & clear', gender: 'Female' },
-  { id: 'pNInz6obpgDQGcFmaJgB', name: 'Adam', description: 'Deep, encouraging & confident', gender: 'Male' },
-  { id: 'IKne3meq5aSn9XLyUdCD', name: 'Charlie', description: 'Casual, friendly & conversational', gender: 'Male' },
-  { id: 'TxGEqnHWrfWFTfGW9XjX', name: 'Josh', description: 'Young, enthusiastic & energetic', gender: 'Male' },
-  { id: 'EXAVITQu4vr4xnSDxMaL', name: 'Bella', description: 'Bright, expressive & friendly', gender: 'Female' }
+  { id: CHARLIE_VOICE_ID, name: 'Charlie', description: 'Casual, friendly & conversational male (Default)', gender: 'Male' },
+  { id: '21m00Tcm4TlvDq8ikWAM', name: 'Rachel', description: 'Warm, natural & clear female', gender: 'Female' },
+  { id: 'pNInz6obpgDQGcFmaJgB', name: 'Adam', description: 'Deep, encouraging male', gender: 'Male' }
 ];
 
 export function useSpeech() {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [rate, setRate] = useState<number>(1.0);
 
-  // ElevenLabs State
+  // ElevenLabs State initialized with default API Key and Charlie's Voice ID
   const [apiKey, setApiKey] = useState<string>(() => {
     try {
       return (
         localStorage.getItem('surf_flashcard_elevenlabs_key') ||
-        import.meta.env.VITE_ELEVENLABS_API_KEY ||
-        ''
+        DEFAULT_API_KEY
       );
     } catch {
-      return import.meta.env.VITE_ELEVENLABS_API_KEY || '';
+      return DEFAULT_API_KEY;
     }
   });
 
   const [voiceId, setVoiceId] = useState<string>(() => {
     try {
-      return localStorage.getItem('surf_flashcard_elevenlabs_voice') || '21m00Tcm4TlvDq8ikWAM';
+      return localStorage.getItem('surf_flashcard_elevenlabs_voice') || CHARLIE_VOICE_ID;
     } catch {
-      return '21m00Tcm4TlvDq8ikWAM';
+      return CHARLIE_VOICE_ID;
     }
   });
 
@@ -52,15 +52,11 @@ export function useSpeech() {
 
   // Save API Key
   const saveApiKey = useCallback((key: string) => {
-    const trimmed = key.trim();
+    const trimmed = key.trim() || DEFAULT_API_KEY;
     setApiKey(trimmed);
     setIsElevenLabsActive(!!trimmed);
     try {
-      if (trimmed) {
-        localStorage.setItem('surf_flashcard_elevenlabs_key', trimmed);
-      } else {
-        localStorage.removeItem('surf_flashcard_elevenlabs_key');
-      }
+      localStorage.setItem('surf_flashcard_elevenlabs_key', trimmed);
     } catch (e) {
       console.error('Failed to save ElevenLabs API key', e);
     }
@@ -89,10 +85,10 @@ export function useSpeech() {
         const preferred =
           englishVoices.find(
             (v) =>
+              v.name.includes('Daniel') ||
               v.name.includes('Google') ||
               v.name.includes('Natural') ||
-              v.name.includes('Samantha') ||
-              v.name.includes('Daniel')
+              v.name.includes('Samantha')
           ) ||
           englishVoices[0] ||
           voices[0] ||
@@ -144,18 +140,14 @@ export function useSpeech() {
     [rate, selectedWebVoice]
   );
 
-  // Main Speak Function (ElevenLabs API with Quota Cache & WebSpeech Fallback)
+  // Main Speak Function (ElevenLabs API using Charlie's voice with session cache & WebSpeech fallback)
   const speak = useCallback(
     async (text: string) => {
       stop();
 
-      // If no ElevenLabs API key, use Browser WebSpeech immediately
-      if (!apiKey.trim()) {
-        speakWebSpeech(text);
-        return;
-      }
-
-      const cacheKey = `${text}_${voiceId}_${rate}`;
+      const activeKey = apiKey.trim() || DEFAULT_API_KEY;
+      const activeVoice = voiceId || CHARLIE_VOICE_ID;
+      const cacheKey = `${text}_${activeVoice}_${rate}`;
 
       // Check session cache to save ElevenLabs character quota
       if (cacheRef.current.has(cacheKey)) {
@@ -178,11 +170,11 @@ export function useSpeech() {
       // Call ElevenLabs Text-to-Speech API
       try {
         setIsSpeaking(true);
-        const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
+        const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${activeVoice}`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'xi-api-key': apiKey.trim()
+            'xi-api-key': activeKey
           },
           body: JSON.stringify({
             text,

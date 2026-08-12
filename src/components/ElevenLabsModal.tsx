@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Sparkles, Key, Volume2, Check, ExternalLink, ShieldCheck } from 'lucide-react';
+import { X, Sparkles, Key, Volume2, Check, ShieldCheck } from 'lucide-react';
 import { ELEVEN_LABS_VOICES } from '../hooks/useSpeech';
 import type { TranslationKeys } from '../data/translations';
 
@@ -54,9 +54,9 @@ export const ElevenLabsModal: React.FC<ElevenLabsModalProps> = ({
             <Sparkles className="w-6 h-6 text-[#EB6F43]" />
           </div>
           <div>
-            <h2 className="text-lg font-black text-[#0B1F3B]">ElevenLabs AI Studio Voice</h2>
+            <h2 className="text-lg font-black text-[#0B1F3B]">Charlie AI Voice (ElevenLabs)</h2>
             <p className="text-xs text-[#0B1F3B]/60 font-semibold">
-              Hyper-realistic AI human studio voice engine
+              Default studio voice engine for all users
             </p>
           </div>
         </div>
@@ -64,7 +64,7 @@ export const ElevenLabsModal: React.FC<ElevenLabsModalProps> = ({
         {/* Studio Voices Selection */}
         <div className="space-y-3 mb-6">
           <label className="block text-xs font-bold uppercase tracking-wider text-[#0B1F3B]/60">
-            Select AI Studio Voice
+            Active AI Voice Engine
           </label>
 
           <div className="space-y-2">
@@ -131,25 +131,15 @@ export const ElevenLabsModal: React.FC<ElevenLabsModalProps> = ({
             <div className="flex items-center justify-between mb-1.5">
               <label className="text-xs font-bold uppercase tracking-wider text-[#0B1F3B]/60 flex items-center gap-1">
                 <Key className="w-3.5 h-3.5 text-[#EB6F43]" />
-                ElevenLabs API Key
+                API Key (Default Provided)
               </label>
-
-              <a
-                href="https://elevenlabs.io"
-                target="_blank"
-                rel="noreferrer"
-                className="text-[11px] font-bold text-[#EB6F43] hover:underline flex items-center gap-0.5"
-              >
-                <span>Get Free Key (10k chars/mo)</span>
-                <ExternalLink className="w-3 h-3" />
-              </a>
             </div>
 
             <input
               type="password"
               value={inputKey}
               onChange={(e) => setInputKey(e.target.value)}
-              placeholder="Paste xi-api-key here..."
+              placeholder="Default API Key active for everyone"
               className="w-full px-3.5 py-2.5 bg-[#F6F1EA] rounded-xl border border-[#0B1F3B]/15 text-[#0B1F3B] text-xs font-mono focus:outline-none focus:border-[#0B1F3B]"
             />
           </div>
@@ -158,7 +148,7 @@ export const ElevenLabsModal: React.FC<ElevenLabsModalProps> = ({
           <div className="p-3 bg-[#EB6F43]/10 rounded-2xl border border-[#EB6F43]/20 flex items-start gap-2.5 text-xs text-[#0B1F3B]/80 font-medium">
             <ShieldCheck className="w-4 h-4 text-[#EB6F43] shrink-0 mt-0.5" />
             <p>
-              <strong className="font-bold text-[#EB6F43]">Quota Savings Enabled:</strong> Audio is cached in session memory so re-playing phrases uses <strong>0 characters</strong>!
+              <strong className="font-bold text-[#EB6F43]">Automatic Fallback:</strong> If ElevenLabs is unavailable or quota is exceeded, audio automatically falls back to browser voice speech generator.
             </p>
           </div>
 
@@ -180,7 +170,7 @@ export const ElevenLabsModal: React.FC<ElevenLabsModalProps> = ({
                   Saved!
                 </>
               ) : (
-                'Save ElevenLabs Key'
+                'Save Key'
               )}
             </button>
           </div>
