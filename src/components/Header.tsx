@@ -1,5 +1,4 @@
-import React from 'react';
-import { Waves, Sparkles, BookMarked, CheckCircle2, RefreshCw, PlusCircle } from 'lucide-react';
+import { BookMarked, CheckCircle2, RefreshCw, PlusCircle } from 'lucide-react';
 
 interface HeaderProps {
   currentIndex: number;
@@ -29,35 +28,15 @@ export const Header: React.FC<HeaderProps> = ({
       {/* Top Banner */}
       <div className="flex flex-col gap-3 glass-panel p-3.5 sm:p-4 rounded-2xl sm:rounded-3xl shadow-xl border border-cyan-500/20">
         
-        {/* Row 1: Logo & Mobile Web App Title */}
+        {/* Quick Actions & Manage Cards */}
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-cyan-400 via-teal-500 to-blue-600 flex items-center justify-center shadow-md shadow-cyan-500/30 shrink-0">
-              <Waves className="w-6 h-6 sm:w-7 sm:h-7 text-slate-950 animate-pulse" />
-            </div>
-            <div>
-              <div className="flex items-center gap-1.5">
-                <h1 className="text-xl sm:text-2xl font-black bg-clip-text text-transparent bg-gradient-to-r from-cyan-300 via-teal-200 to-sky-400 tracking-tight">
-                  SURF ENGLISH
-                </h1>
-                <span className="px-1.5 py-0.5 text-[10px] sm:text-xs font-semibold uppercase bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 rounded-full flex items-center gap-0.5">
-                  <Sparkles className="w-3 h-3 text-cyan-300" /> Mobile
-                </span>
-              </div>
-              <p className="text-[11px] sm:text-xs text-slate-400 font-medium line-clamp-1">
-                Thai Surf Instructor & Student Vocabulary
-              </p>
-            </div>
-          </div>
-
           <button
             onClick={onOpenPinModal}
-            className="flex items-center gap-1.5 text-xs font-bold px-3 py-2 rounded-xl bg-gradient-to-r from-cyan-500/20 to-teal-500/20 text-cyan-300 border border-cyan-500/40 hover:bg-cyan-500/30 hover:border-cyan-300 transition-all active-push shadow-sm shadow-cyan-500/10 shrink-0"
+            className="flex items-center gap-1.5 text-xs font-bold px-3.5 py-2 rounded-xl bg-gradient-to-r from-cyan-500/20 to-teal-500/20 text-cyan-300 border border-cyan-500/40 hover:bg-cyan-500/30 hover:border-cyan-300 transition-all active-push shadow-sm shadow-cyan-500/10"
             title="Add or Manage Flashcards (PIN Required)"
           >
             <PlusCircle className="w-4 h-4 text-cyan-400" />
-            <span className="hidden sm:inline">Add / Manage Cards</span>
-            <span className="sm:hidden">Manage</span>
+            <span>Add / Manage Cards</span>
           </button>
         </div>
 
