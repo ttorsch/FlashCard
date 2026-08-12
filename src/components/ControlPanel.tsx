@@ -25,7 +25,33 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
   setRate,
   totalCards
 }) => {
+  const triggerHaptic = () => {
+    if (typeof window !== 'undefined' && 'navigator' in window && 'vibrate' in navigator) {
+      try {
+        navigator.vibrate(15);
+      } catch {
+        // Ignore if unsupported
+      }
+    }
+  };
+
+  const handlePrevClick = () => {
+    triggerHaptic();
+    onPrev();
+  };
+
+  const handleNextClick = () => {
+    triggerHaptic();
+    onNext();
+  };
+
+  const handleShuffleClick = () => {
+    triggerHaptic();
+    onShuffle();
+  };
+
   const handleRateToggle = () => {
+    triggerHaptic();
     if (rate === 0.8) setRate(1.0);
     else if (rate === 1.0) setRate(1.2);
     else setRate(0.8);
@@ -38,69 +64,60 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
   };
 
   return (
-    <div className="w-full max-w-2xl mx-auto px-4 my-4 no-select">
-      <div className="glass-panel p-4 rounded-3xl border border-slate-700/80 shadow-2xl flex flex-col gap-4">
-        {/* Main Controls: Previous, Play/Shuffle, Next */}
-        <div className="flex items-center justify-between gap-3">
+    <div className="w-full max-w-2xl mx-auto px-3 my-2 no-select safe-area-bottom">
+      <div className="glass-panel p-3 sm:p-4 rounded-3xl border border-slate-700/80 shadow-2xl flex flex-col gap-3">
+        {/* Main Controls: Large Thumb-friendly Buttons for Phones */}
+        <div className="flex items-center justify-between gap-2.5">
           {/* Previous Card Button */}
           <button
-            onClick={onPrev}
+            onClick={handlePrevClick}
             disabled={totalCards <= 1}
-            className="flex-1 py-3 px-4 rounded-2xl bg-slate-800/90 text-slate-200 border border-slate-700 hover:border-cyan-500/50 hover:bg-slate-700/80 active:scale-95 disabled:opacity-40 disabled:pointer-events-none transition-all flex items-center justify-center gap-2 font-bold shadow-lg"
+            className="flex-1 min-h-[50px] py-3 px-3 rounded-2xl bg-slate-900/90 text-slate-200 border border-slate-700 hover:border-cyan-500/50 active-push disabled:opacity-40 disabled:pointer-events-none transition-all flex items-center justify-center gap-1.5 font-bold text-sm shadow-md"
           >
             <ChevronLeft className="w-5 h-5 text-cyan-400" />
-            <span className="hidden sm:inline">Previous</span>
+            <span>Prev</span>
           </button>
 
           {/* Shuffle Button */}
           <button
-            onClick={onShuffle}
+            onClick={handleShuffleClick}
             disabled={totalCards <= 1}
-            className={`py-3 px-5 rounded-2xl border font-bold transition-all duration-200 flex items-center gap-2 shadow-lg active:scale-95 ${
+            className={`min-h-[50px] px-4 rounded-2xl border font-bold text-sm transition-all duration-200 flex items-center gap-1.5 shadow-md active-push ${
               isShuffled
                 ? 'bg-gradient-to-r from-teal-500 to-cyan-500 text-slate-950 border-teal-300 shadow-teal-500/20'
-                : 'bg-slate-800/90 text-cyan-300 border-slate-700 hover:border-cyan-500/50 hover:bg-slate-700/80'
+                : 'bg-slate-900/90 text-cyan-300 border-slate-700 hover:border-cyan-500/50'
             }`}
             title="Shuffle card deck"
           >
-            <Shuffle className={`w-5 h-5 ${isShuffled ? 'text-slate-950 animate-spin-once' : 'text-cyan-400'}`} />
-            <span className="hidden sm:inline">{isShuffled ? 'Shuffled' : 'Shuffle'}</span>
+            <Shuffle className={`w-4 h-4 ${isShuffled ? 'text-slate-950' : 'text-cyan-400'}`} />
+            <span>Shuffle</span>
           </button>
 
           {/* Next Card Button */}
           <button
-            onClick={onNext}
+            onClick={handleNextClick}
             disabled={totalCards <= 1}
-            className="flex-1 py-3 px-4 rounded-2xl bg-gradient-to-r from-cyan-500 via-teal-500 to-emerald-500 text-slate-950 border border-cyan-300 hover:brightness-110 active:scale-95 disabled:opacity-40 disabled:pointer-events-none transition-all flex items-center justify-center gap-2 font-black shadow-lg shadow-cyan-500/20"
+            className="flex-1 min-h-[50px] py-3 px-3 rounded-2xl bg-gradient-to-r from-cyan-500 via-teal-500 to-emerald-500 text-slate-950 border border-cyan-300 active-push disabled:opacity-40 disabled:pointer-events-none transition-all flex items-center justify-center gap-1.5 font-black text-sm shadow-lg shadow-cyan-500/20"
           >
-            <span className="hidden sm:inline">Next Card</span>
+            <span>Next</span>
             <ChevronRight className="w-5 h-5 text-slate-950" />
           </button>
         </div>
 
         {/* Secondary Options Bar: Audio Speed & Keyboard Shortcuts */}
-        <div className="flex items-center justify-between border-t border-slate-800/80 pt-3 px-1 text-xs text-slate-400">
+        <div className="flex items-center justify-between border-t border-slate-800/80 pt-2 px-1 text-xs text-slate-400">
           {/* Audio Speed Rate Toggle */}
           <button
             onClick={handleRateToggle}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900/80 border border-slate-700/80 hover:border-cyan-500/40 text-slate-300 hover:text-cyan-300 transition-colors"
+            className="flex items-center gap-1.5 min-h-[36px] px-3 py-1 rounded-xl bg-slate-900/80 border border-slate-700/80 hover:border-cyan-500/40 text-slate-300 active-push transition-colors"
           >
             <Gauge className="w-3.5 h-3.5 text-cyan-400" />
             <span>Speed: <strong className="text-cyan-300">{getRateLabel()}</strong></span>
           </button>
 
-          {/* Keyboard Hint Info */}
-          <div className="hidden sm:flex items-center gap-3 text-[11px] text-slate-400 font-mono">
-            <span className="flex items-center gap-1">
-              <kbd className="px-1.5 py-0.5 bg-slate-800 border border-slate-700 rounded text-cyan-300">←</kbd>
-              <kbd className="px-1.5 py-0.5 bg-slate-800 border border-slate-700 rounded text-cyan-300">→</kbd> Nav
-            </span>
-            <span className="flex items-center gap-1">
-              <kbd className="px-1.5 py-0.5 bg-slate-800 border border-slate-700 rounded text-cyan-300">Space</kbd> Flip
-            </span>
-            <span className="flex items-center gap-1">
-              <kbd className="px-1.5 py-0.5 bg-slate-800 border border-slate-700 rounded text-cyan-300">S</kbd> Audio
-            </span>
+          {/* Mobile Gestures Notice */}
+          <div className="flex items-center gap-1 text-[11px] text-slate-400">
+            <span>Swipe cards to navigate</span>
           </div>
         </div>
       </div>
