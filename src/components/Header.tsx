@@ -1,5 +1,5 @@
 import React from 'react';
-import { Waves, Sparkles, BookMarked, CheckCircle2, RefreshCw, Smartphone } from 'lucide-react';
+import { Waves, Sparkles, BookMarked, CheckCircle2, RefreshCw, PlusCircle } from 'lucide-react';
 
 interface HeaderProps {
   currentIndex: number;
@@ -9,6 +9,7 @@ interface HeaderProps {
   showStarredOnly: boolean;
   setShowStarredOnly: (val: boolean | ((prev: boolean) => boolean)) => void;
   onResetProgress: () => void;
+  onOpenPinModal: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -18,7 +19,8 @@ export const Header: React.FC<HeaderProps> = ({
   masteredCount,
   showStarredOnly,
   setShowStarredOnly,
-  onResetProgress
+  onResetProgress,
+  onOpenPinModal
 }) => {
   const progressPercent = totalCards > 0 ? Math.round(((currentIndex + 1) / totalCards) * 100) : 0;
 
@@ -48,10 +50,15 @@ export const Header: React.FC<HeaderProps> = ({
             </div>
           </div>
 
-          <div className="hidden xs:flex items-center gap-1 text-[11px] text-cyan-400/80 bg-cyan-500/10 px-2 py-1 rounded-lg border border-cyan-500/20">
-            <Smartphone className="w-3.5 h-3.5" />
-            <span>Mobile Ready</span>
-          </div>
+          <button
+            onClick={onOpenPinModal}
+            className="flex items-center gap-1.5 text-xs font-bold px-3 py-2 rounded-xl bg-gradient-to-r from-cyan-500/20 to-teal-500/20 text-cyan-300 border border-cyan-500/40 hover:bg-cyan-500/30 hover:border-cyan-300 transition-all active-push shadow-sm shadow-cyan-500/10 shrink-0"
+            title="Add or Manage Flashcards (PIN Required)"
+          >
+            <PlusCircle className="w-4 h-4 text-cyan-400" />
+            <span className="hidden sm:inline">Add / Manage Cards</span>
+            <span className="sm:hidden">Manage</span>
+          </button>
         </div>
 
         {/* Row 2: Quick Stats & Filter Badges (Touch Optimized 44px+ height) */}

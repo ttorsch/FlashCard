@@ -6,12 +6,24 @@ import { Header } from './components/Header';
 import { CategoryFilter } from './components/CategoryFilter';
 import { Flashcard } from './components/Flashcard';
 import { ControlPanel } from './components/ControlPanel';
+import { PinModal } from './components/PinModal';
+import { CardManagerModal } from './components/CardManagerModal';
 import { useSpeech } from './hooks/useSpeech';
 import { Waves, BookMarked, RefreshCcw } from 'lucide-react';
 
 export function App() {
+  const [vocabulary, setVocabulary] = useState<SurfVocabulary[]>(() => {
+    try {
+      const saved = localStorage.getItem('surf_flashcard_custom_vocabulary');
+      return saved ? JSON.parse(saved) : SURF_VOCABULARY;
+    } catch {
+      return SURF_VOCABULARY;
+    }
+  });
+
   const [selectedCategory, setSelectedCategory] = useState<string>('All Categories');
   const [showStarredOnly, setShowStarredOnly] = useState<boolean>(false);
+  
   const [starredIds, setStarredIds] = useState<string[]>(() => {
     try {
       const saved = localStorage.getItem('surf_flashcard_starred');
@@ -35,7 +47,20 @@ export function App() {
   const [currentIndex, setCurrentIndex] = useState<number>(0);
   const [isFlipped, setIsFlipped] = useState<boolean>(false);
 
+  // PIN & Card Manager Modals
+  const [isPinModalOpen, setIsPinModalOpen] = useState(false);
+  const [isCardManagerOpen, setIsCardManagerOpen] = useState(false);
+
   const { speak, stop, isSpeaking, rate, setRate } = useSpeech();
+
+  // Save vocabulary to local storage
+  useEffect(() => {
+    try {
+      localStorage.setItem('surf_flashcard_custom_vocabulary', JSON.stringify(vocabulary));
+    } catch (e) {
+      console.error('Failed to save vocabulary', e);
+    }
+  }, [vocabulary]);
 
   // Save progress to local storage
   useEffect(() => {
@@ -54,9 +79,33 @@ export function App() {
     }
   }, [masteredIds]);
 
+  // Card Management Handlers
+  const handleAddCard = useCallback((newCardData: Omit<SurfVocabulary, 'id'>) => {
+    const newCard: SurfVocabulary = {
+      ...newCardData,
+      id: `surf-custom-${Date.now()}`
+    };
+    setVocabulary((prev) => [newCard, ...prev]);
+  }, []);
+
+  const handleEditCard = useCallback((updatedCard: SurfVocabulary) => {
+    setVocabulary((prev) => prev.map((card) => (card.id === updatedCard.id ? updatedCard : card)));
+  }, []);
+
+  const handleDeleteCard = useCallback((id: string) => {
+    setVocabulary((prev) => prev.filter((card) => card.id !== id));
+    setStarredIds((prev) => prev.filter((item) => item !== id));
+    setMasteredIds((prev) => prev.filter((item) => item !== id));
+  }, []);
+
+  const handleResetVocabulary = useCallback(() => {
+    setVocabulary(SURF_VOCABULARY);
+    localStorage.removeItem('surf_flashcard_custom_vocabulary');
+  }, []);
+
   // Compute filtered dataset
   const filteredCards = useMemo(() => {
-    let list: SurfVocabulary[] = SURF_VOCABULARY;
+    let list: SurfVocabulary[] = vocabulary;
 
     if (selectedCategory !== 'All Categories') {
       list = list.filter((card) => card.category === selectedCategory);
@@ -77,29 +126,29 @@ export function App() {
     }
 
     return list;
-  }, [selectedCategory, showStarredOnly, starredIds, isShuffled, shuffledSeed]);
+  }, [vocabulary, selectedCategory, showStarredOnly, starredIds, isShuffled, shuffledSeed]);
 
   // Category counts
   const categoryCounts = useMemo(() => {
     const counts: Record<string, number> = {
-      'All Categories': SURF_VOCABULARY.length
+      'All Categories': vocabulary.length
     };
 
     CATEGORIES.forEach((cat) => {
       if (cat !== 'All Categories') {
-        counts[cat] = SURF_VOCABULARY.filter((card) => card.category === cat).length;
+        counts[cat] = vocabulary.filter((card) => card.category === cat).length;
       }
     });
 
     return counts;
-  }, []);
+  }, [vocabulary]);
 
   // Ensure index stays in bounds when filter changes
   useEffect(() => {
     setCurrentIndex(0);
     setIsFlipped(false);
     stop();
-  }, [selectedCategory, showStarredOnly, isShuffled, stop]);
+  }, [selectedCategory, showStarredOnly, isShuffled, vocabulary.length, stop]);
 
   const currentCard = filteredCards[currentIndex] || null;
 
@@ -156,6 +205,7 @@ export function App() {
   // Keyboard navigation shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      if (isPinModalOpen || isCardManagerOpen) return;
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
 
       if (e.key === 'ArrowRight') {
@@ -177,11 +227,11 @@ export function App() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleNext, handlePrev, speak, currentCard]);
+  }, [handleNext, handlePrev, speak, currentCard, isPinModalOpen, isCardManagerOpen]);
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-between pb-8 select-none overflow-x-hidden">
-      {/* Header with Stats & Progress */}
+      {/* Header with Stats, Progress & PIN Protected Manage Cards Button */}
       <Header
         currentIndex={currentIndex}
         totalCards={filteredCards.length}
@@ -190,6 +240,7 @@ export function App() {
         showStarredOnly={showStarredOnly}
         setShowStarredOnly={setShowStarredOnly}
         onResetProgress={handleResetProgress}
+        onOpenPinModal={() => setIsPinModalOpen(true)}
       />
 
       {/* Category Filter Pills */}
@@ -247,6 +298,28 @@ export function App() {
           totalCards={filteredCards.length}
         />
       )}
+
+      {/* PIN Verification Modal (2026 PIN) */}
+      <PinModal
+        isOpen={isPinModalOpen}
+        onClose={() => setIsPinModalOpen(false)}
+        onSuccess={() => {
+          setIsPinModalOpen(false);
+          setIsCardManagerOpen(true);
+        }}
+        correctPin="2026"
+      />
+
+      {/* Card Manager Modal (Add, Edit, Delete Cards) */}
+      <CardManagerModal
+        isOpen={isCardManagerOpen}
+        onClose={() => setIsCardManagerOpen(false)}
+        cards={vocabulary}
+        onAddCard={handleAddCard}
+        onEditCard={handleEditCard}
+        onDeleteCard={handleDeleteCard}
+        onResetVocabulary={handleResetVocabulary}
+      />
 
       {/* Footer Branding */}
       <footer className="text-center text-xs text-slate-500 mt-2">
