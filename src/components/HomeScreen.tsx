@@ -1,5 +1,5 @@
 import React from 'react';
-import { ChevronRight, BookOpen, MessageSquareQuote, Sparkles, Volume2 } from 'lucide-react';
+import { ChevronRight, BookOpen, MessageSquareQuote, Volume2, Globe } from 'lucide-react';
 import type { SurfVocabulary } from '../data/surfVocabulary';
 import type { SurfPhrase } from '../data/surfPhrases';
 import type { TranslationKeys } from '../data/translations';
@@ -14,6 +14,7 @@ interface HomeScreenProps {
   onGoStudy: () => void;
   onGoPhrases: () => void;
   onSpeak: (text: string) => void;
+  toggleLang: () => void;
   t: TranslationKeys;
 }
 
@@ -38,6 +39,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   onGoStudy,
   onGoPhrases,
   onSpeak,
+  toggleLang,
   t
 }) => {
   const learnedCount = vocabulary.filter((c) => masteredIds.includes(c.id)).length;
@@ -52,12 +54,22 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
 
   return (
     <div className="w-full max-w-md mx-auto px-4 pt-6 pb-16 flex flex-col gap-6 animate-fadeIn">
-      {/* Hero Header */}
-      <div className="flex flex-col gap-2">
-        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#EB6F43]/10 text-[#EB6F43] font-bold text-[11px] w-fit">
-          <Sparkles className="w-3.5 h-3.5" />
-          <span>SURF ENGLISH & THAI</span>
+      {/* Hero Header & Language Switcher */}
+      <div className="flex flex-col gap-3">
+        <div className="flex items-center justify-between gap-2">
+          <span className="lb-micro">SURF THAI</span>
+
+          {/* Language Switcher */}
+          <button
+            onClick={toggleLang}
+            className="p-1.5 px-3 rounded-full bg-white text-[#0B1F3B] border border-[#0B1F3B]/15 font-bold text-xs active-push shadow-xs cursor-pointer flex items-center gap-1.5 shrink-0"
+            title="Switch UI Language"
+          >
+            <Globe className="w-4 h-4 text-[#EB6F43]" />
+            <span className="text-xs font-bold uppercase">{t.langName || 'TH'}</span>
+          </button>
         </div>
+
         <h1 className="text-2xl font-black text-[#0B1F3B] leading-tight tracking-tight">
           {t.welcomeTitle}
         </h1>
@@ -66,7 +78,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         </p>
 
         {/* 2 Quick Practice Launchers */}
-        <div className="grid grid-cols-2 gap-3 mt-2">
+        <div className="grid grid-cols-2 gap-3 mt-1">
           <button
             onClick={onGoStudy}
             className="p-3.5 rounded-2xl bg-[#0B1F3B] text-white font-bold text-xs flex items-center justify-between shadow-md active-push transition-all cursor-pointer"

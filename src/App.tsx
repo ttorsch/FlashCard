@@ -122,9 +122,12 @@ export function App() {
   const [currentIndex, setCurrentIndex] = useState<number>(0);
   const [isFlipped, setIsFlipped] = useState<boolean>(false);
 
-  // Modals
+  // Modals & Editing Target State
   const [isPinModalOpen, setIsPinModalOpen] = useState(false);
   const [isCardManagerOpen, setIsCardManagerOpen] = useState(false);
+  const [managerInitialMode, setManagerInitialMode] = useState<'vocab' | 'phrases'>('vocab');
+  const [editingTargetPhrase, setEditingTargetPhrase] = useState<SurfPhrase | null>(null);
+  const [editingTargetCard, setEditingTargetCard] = useState<SurfVocabulary | null>(null);
 
   const { speak, stop, isSpeaking, rate, setRate } = useSpeech();
 
@@ -184,6 +187,25 @@ export function App() {
 
   const handleDeleteCard = useCallback((id: string) => {
     setVocabulary((prev) => prev.filter((card) => card.id !== id));
+    setStarredIds((prev) => prev.filter((item) => item !== id));
+    setMasteredIds((prev) => prev.filter((item) => item !== id));
+  }, []);
+
+  // Phrase Management Handlers
+  const handleAddPhrase = useCallback((newPhraseData: Omit<SurfPhrase, 'id'>) => {
+    const newPhrase: SurfPhrase = {
+      ...newPhraseData,
+      id: `phrase-custom-${Date.now()}`
+    };
+    setPhrases((prev) => [newPhrase, ...prev]);
+  }, []);
+
+  const handleEditPhrase = useCallback((updatedPhrase: SurfPhrase) => {
+    setPhrases((prev) => prev.map((phrase) => (phrase.id === updatedPhrase.id ? updatedPhrase : phrase)));
+  }, []);
+
+  const handleDeletePhrase = useCallback((id: string) => {
+    setPhrases((prev) => prev.filter((phrase) => phrase.id !== id));
     setStarredIds((prev) => prev.filter((item) => item !== id));
     setMasteredIds((prev) => prev.filter((item) => item !== id));
   }, []);
@@ -325,14 +347,18 @@ export function App() {
   }, []);
 
   const handleEditCardFromManage = useCallback((card: SurfVocabulary) => {
-    setSelectedCategory(card.category);
-    const indexInCat = vocabulary
-      .filter((c) => c.category === card.category)
-      .findIndex((c) => c.id === card.id);
-    setCurrentIndex(Math.max(0, indexInCat));
-    setScreen('study');
-    setIsFlipped(false);
-  }, [vocabulary]);
+    setEditingTargetCard(card);
+    setEditingTargetPhrase(null);
+    setManagerInitialMode('vocab');
+    setIsPinModalOpen(true);
+  }, []);
+
+  const handleEditPhraseFromManage = useCallback((phrase: SurfPhrase) => {
+    setEditingTargetPhrase(phrase);
+    setEditingTargetCard(null);
+    setManagerInitialMode('phrases');
+    setIsPinModalOpen(true);
+  }, []);
 
   // Keyboard navigation shortcuts
   useEffect(() => {
@@ -352,7 +378,7 @@ export function App() {
       } else if (e.key === 's' || e.key === 'S') {
         e.preventDefault();
         if (currentCard) {
-          speak(currentCard.audioText || currentCard.english);
+          speak(currentCard.english);
         }
       }
     };
@@ -378,6 +404,7 @@ export function App() {
           onGoStudy={() => setScreen('study')}
           onGoPhrases={() => setScreen('phrases')}
           onSpeak={speak}
+          toggleLang={toggleLang}
           t={t}
         />
       )}
@@ -514,9 +541,16 @@ export function App() {
       {screen === 'manage' && (
         <ManageScreen
           vocabulary={vocabulary}
+          phrases={phrases}
           masteredIds={masteredIds}
-          onOpenPinModal={() => setIsPinModalOpen(true)}
+          onOpenPinModal={() => {
+            setEditingTargetCard(null);
+            setEditingTargetPhrase(null);
+            setManagerInitialMode('vocab');
+            setIsPinModalOpen(true);
+          }}
           onSelectCardToEdit={handleEditCardFromManage}
+          onSelectPhraseToEdit={handleEditPhraseFromManage}
           t={t}
         />
       )}
@@ -536,18 +570,30 @@ export function App() {
         t={t}
       />
 
-      {/* Card Manager Modal */}
+      {/* Card & Phrase Manager Modal */}
       <CardManagerModal
         isOpen={isCardManagerOpen}
-        onClose={() => setIsCardManagerOpen(false)}
+        onClose={() => {
+          setIsCardManagerOpen(false);
+          setEditingTargetCard(null);
+          setEditingTargetPhrase(null);
+        }}
         cards={vocabulary}
         categories={categories}
+        phrases={phrases}
+        phraseCategories={phraseCategories}
         onAddCard={handleAddCard}
         onEditCard={handleEditCard}
         onDeleteCard={handleDeleteCard}
         onResetVocabulary={handleResetVocabulary}
         onAddCategory={handleAddCategory}
         onDeleteCategory={handleDeleteCategory}
+        onAddPhrase={handleAddPhrase}
+        onEditPhrase={handleEditPhrase}
+        onDeletePhrase={handleDeletePhrase}
+        initialMode={managerInitialMode}
+        targetCard={editingTargetCard}
+        targetPhrase={editingTargetPhrase}
         t={t}
       />
     </div>

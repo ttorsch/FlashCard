@@ -8,7 +8,8 @@ const en = {
   tabManage: 'Manage',
 
   // Home Screen / Landing Page
-  welcomeTitle: 'Surf English & Thai Companion',
+  langName: 'EN',
+  welcomeTitle: 'Surf Lesson Vocabs and Phrases',
   landingHeroSub: 'Master Surf Terminology & Useful Coaching Phrases with Native Audio & Thai Phonetics',
   todayBannerTitle: 'Continue Learning',
   learnedCountLabel: 'Learned',
@@ -118,7 +119,8 @@ const th: TranslationKeys = {
   tabManage: 'จัดการ',
 
   // Home Screen / Landing Page
-  welcomeTitle: 'คู่มือภาษาอังกฤษเพื่อการโต้คลื่น',
+  langName: 'TH',
+  welcomeTitle: 'คำศัพท์และประโยคสำหรับการเรียนเซิร์ฟ',
   landingHeroSub: 'เรียนรู้คำศัพท์โต้คลื่นและประโยคคำสั่งสอนโต้คลื่น พร้อมคำอ่านออกเสียงภาษาไทยและเสียงเจ้าของภาษา',
   todayBannerTitle: 'เรียนต่อจากเดิม',
   learnedCountLabel: 'เรียนรู้แล้ว',
