@@ -3,16 +3,29 @@ export type Language = 'en' | 'th';
 const en = {
   // Navigation Tabs
   tabHome: 'Home',
-  tabStudy: 'Study',
+  tabStudy: 'Vocab',
+  tabPhrases: 'Phrases',
   tabManage: 'Manage',
 
-  // Home Screen
-  welcomeTitle: 'Welcome Back',
+  // Home Screen / Landing Page
+  welcomeTitle: 'Surf English & Thai Companion',
+  landingHeroSub: 'Master Surf Terminology & Useful Coaching Phrases with Native Audio & Thai Phonetics',
   todayBannerTitle: 'Continue Learning',
   learnedCountLabel: 'Learned',
   totalCountLabel: 'Total Terms',
-  categoriesHeader: 'Categories',
-  goButton: 'GO',
+  totalPhrasesCountLabel: 'Useful Phrases',
+  categoriesHeader: 'Vocabulary Categories',
+  phraseCategoriesHeader: 'Phrase Categories',
+  goButton: 'STUDY',
+  startVocabBtn: 'Practice Vocabulary',
+  startPhrasesBtn: 'Study Useful Phrases',
+  featuredPhraseHeader: 'Featured Coaching Command',
+
+  // Phrases Screen
+  phrasesTitle: 'Useful Surf Phrases',
+  phrasesSubtitle: 'Coaching Commands, Line-up Rules & Water Communication',
+  contextTipHeader: 'Coaching Context Tip:',
+  allPhrasesCategories: 'All Phrases',
 
   // Header & Quick Actions
   addManageCards: 'Add / Manage Cards',
@@ -40,6 +53,7 @@ const en = {
   surfTipHeader: 'Surf Instructor Tip:',
   thaiTranslationBadge: 'คำแปลภาษาไทย',
   englishTerminologyBadge: 'ENGLISH SURF TERMINOLOGY',
+  englishPhraseBadge: 'ENGLISH SURF PHRASE',
   listenAudio: 'Listen Audio',
   speaking: 'Speaking...',
 
@@ -60,13 +74,13 @@ const en = {
 
   // Pin Modal
   enterPinTitle: 'Enter Admin PIN',
-  enterPinDesc: 'Please enter your PIN to manage flashcards',
+  enterPinDesc: 'Please enter your PIN to manage flashcards & phrases',
   enterPinPlaceholder: 'Enter PIN...',
-  unlockManager: 'Unlock Card Manager',
+  unlockManager: 'Unlock Manager',
   incorrectPin: 'Incorrect PIN. Please try again.',
 
   // Card Manager Modal
-  managerTitle: 'Flashcard & Category Manager',
+  managerTitle: 'Flashcard & Phrase Manager',
   totalCards: 'Total Cards:',
   categoriesCount: 'Categories:',
   tabAllCards: 'All Cards',
@@ -79,10 +93,10 @@ const en = {
   createCardTitle: 'Create New Flashcard',
   editCardTitle: 'Editing:',
   categoryLabel: 'Category *',
-  englishLabel: 'English Word / Term *',
+  englishLabel: 'English Word / Phrase *',
   thaiMeaningLabel: 'Thai Meaning *',
   thaiPhoneticLabel: 'Thai Phonetic Pronunciation',
-  exampleLabel: 'Example Sentence',
+  exampleLabel: 'Example Sentence / Context',
   surfTipLabel: 'Surf Tip (Thai advice)',
   audioTextLabel: 'Audio Text (Read Aloud Voice Text)',
   cancel: 'Cancel',
@@ -99,16 +113,29 @@ export type TranslationKeys = typeof en;
 const th: TranslationKeys = {
   // Navigation Tabs
   tabHome: 'หน้าแรก',
-  tabStudy: 'ฝึกคำศัพท์',
-  tabManage: 'จัดการการ์ด',
+  tabStudy: 'คำศัพท์',
+  tabPhrases: 'ประโยคใช้งาน',
+  tabManage: 'จัดการ',
 
-  // Home Screen
-  welcomeTitle: 'สวัสดี ยินดีต้อนรับ',
+  // Home Screen / Landing Page
+  welcomeTitle: 'คู่มือภาษาอังกฤษเพื่อการโต้คลื่น',
+  landingHeroSub: 'เรียนรู้คำศัพท์โต้คลื่นและประโยคคำสั่งสอนโต้คลื่น พร้อมคำอ่านออกเสียงภาษาไทยและเสียงเจ้าของภาษา',
   todayBannerTitle: 'เรียนต่อจากเดิม',
   learnedCountLabel: 'เรียนรู้แล้ว',
   totalCountLabel: 'คำศัพท์ทั้งหมด',
-  categoriesHeader: 'หมวดหมู่',
-  goButton: 'GO',
+  totalPhrasesCountLabel: 'ประโยคใช้งาน',
+  categoriesHeader: 'หมวดหมู่คำศัพท์',
+  phraseCategoriesHeader: 'หมวดหมู่ประโยคใช้งาน',
+  goButton: 'เริ่มเรียน',
+  startVocabBtn: 'ฝึกคำศัพท์โต้คลื่น',
+  startPhrasesBtn: 'ฝึกประโยคติดปาก',
+  featuredPhraseHeader: 'ประโยคคำสั่งสอนโต้คลื่นยอดฮิต',
+
+  // Phrases Screen
+  phrasesTitle: 'ประโยคใช้งานโต้คลื่น',
+  phrasesSubtitle: 'คำสั่งสอน กฎ Line-up และการสื่อสารในน้ำ',
+  contextTipHeader: 'บริบทและเทคนิคจากโค้ช:',
+  allPhrasesCategories: 'ประโยคทั้งหมด',
 
   // Header & Quick Actions
   addManageCards: 'เพิ่ม / จัดการการ์ด',
@@ -136,6 +163,7 @@ const th: TranslationKeys = {
   surfTipHeader: 'คำแนะนำจากผู้สอน:',
   thaiTranslationBadge: 'คำแปลภาษาไทย',
   englishTerminologyBadge: 'คำศัพท์โต้คลื่นภาษาอังกฤษ',
+  englishPhraseBadge: 'ประโยคโต้คลื่นภาษาอังกฤษ',
   listenAudio: 'ฟังเสียงอ่าน',
   speaking: 'กำลังเล่นเสียง...',
 

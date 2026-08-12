@@ -2,6 +2,8 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import confetti from 'canvas-confetti';
 import { SURF_VOCABULARY, DEFAULT_CATEGORIES } from './data/surfVocabulary';
 import type { SurfVocabulary } from './data/surfVocabulary';
+import { SURF_PHRASES, DEFAULT_PHRASE_CATEGORIES } from './data/surfPhrases';
+import type { SurfPhrase } from './data/surfPhrases';
 import { TRANSLATIONS } from './data/translations';
 import type { Language } from './data/translations';
 
@@ -11,6 +13,7 @@ import { HomeScreen } from './components/HomeScreen';
 import { CategoryFilter } from './components/CategoryFilter';
 import { Flashcard } from './components/Flashcard';
 import { ControlPanel } from './components/ControlPanel';
+import { PhrasesScreen } from './components/PhrasesScreen';
 import { ManageScreen } from './components/ManageScreen';
 import { PinModal } from './components/PinModal';
 import { CardManagerModal } from './components/CardManagerModal';
@@ -19,7 +22,7 @@ import { useSpeech } from './hooks/useSpeech';
 import { BookMarked, RefreshCcw, Globe } from 'lucide-react';
 
 export function App() {
-  const [screen, setScreen] = useState<ScreenType>('study');
+  const [screen, setScreen] = useState<ScreenType>('home');
   const [frontCardLang, setFrontCardLang] = useState<'EN' | 'TH'>('EN');
 
   const [lang, setLang] = useState<Language>(() => {
@@ -45,6 +48,7 @@ export function App() {
     }
   }, [lang]);
 
+  // Vocabulary State
   const [vocabulary, setVocabulary] = useState<SurfVocabulary[]>(() => {
     try {
       const saved = localStorage.getItem('surf_flashcard_custom_vocabulary');
@@ -60,6 +64,25 @@ export function App() {
       return saved ? JSON.parse(saved) : DEFAULT_CATEGORIES;
     } catch {
       return DEFAULT_CATEGORIES;
+    }
+  });
+
+  // Useful Phrases State
+  const [phrases, setPhrases] = useState<SurfPhrase[]>(() => {
+    try {
+      const saved = localStorage.getItem('surf_flashcard_phrases');
+      return saved ? JSON.parse(saved) : SURF_PHRASES;
+    } catch {
+      return SURF_PHRASES;
+    }
+  });
+
+  const [phraseCategories] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem('surf_flashcard_phrase_categories');
+      return saved ? JSON.parse(saved) : DEFAULT_PHRASE_CATEGORIES;
+    } catch {
+      return DEFAULT_PHRASE_CATEGORIES;
     }
   });
 
@@ -103,6 +126,14 @@ export function App() {
       console.error('Failed to save vocabulary', e);
     }
   }, [vocabulary]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('surf_flashcard_phrases', JSON.stringify(phrases));
+    } catch (e) {
+      console.error('Failed to save phrases', e);
+    }
+  }, [phrases]);
 
   useEffect(() => {
     try {
@@ -150,8 +181,10 @@ export function App() {
   const handleResetVocabulary = useCallback(() => {
     setVocabulary(SURF_VOCABULARY);
     setCategories(DEFAULT_CATEGORIES);
+    setPhrases(SURF_PHRASES);
     localStorage.removeItem('surf_flashcard_custom_vocabulary');
     localStorage.removeItem('surf_flashcard_categories');
+    localStorage.removeItem('surf_flashcard_phrases');
   }, []);
 
   // Category Handlers
@@ -181,7 +214,7 @@ export function App() {
     }
   }, [selectedCategory]);
 
-  // Compute filtered dataset
+  // Compute filtered dataset for vocabulary
   const filteredCards = useMemo(() => {
     let list: SurfVocabulary[] = vocabulary;
 
@@ -271,7 +304,7 @@ export function App() {
     });
   }, []);
 
-  // Home Screen actions
+  // Navigation handlers
   const handleOpenStudyCategory = useCallback((catName: string) => {
     setSelectedCategory(catName);
     setScreen('study');
@@ -321,25 +354,29 @@ export function App() {
 
   return (
     <div className="min-h-screen bg-[#F6F1EA] text-[#0B1F3B] flex flex-col justify-between select-none overflow-x-hidden">
-      {/* SCREEN 1: HOME */}
+      {/* SCREEN 1: HOME LANDING PAGE */}
       {screen === 'home' && (
         <HomeScreen
           vocabulary={vocabulary}
           categories={categories}
+          phrases={phrases}
+          phraseCategories={phraseCategories}
           masteredIds={masteredIds}
           onOpenStudyCategory={handleOpenStudyCategory}
           onGoStudy={() => setScreen('study')}
+          onGoPhrases={() => setScreen('phrases')}
+          onSpeak={speak}
           t={t}
         />
       )}
 
-      {/* SCREEN 2: STUDY */}
+      {/* SCREEN 2: STUDY VOCABULARY */}
       {screen === 'study' && (
         <div className="w-full max-w-md mx-auto px-4 pt-6 pb-24 flex flex-col gap-3 animate-fadeIn">
           {/* Top Header Bar */}
           <div className="flex items-center justify-between gap-2">
             <div className="flex flex-col gap-0.5">
-              <span className="lb-micro">SURF THAI</span>
+              <span className="lb-micro">SURF THAI VOCABULARY</span>
               <h1 className="text-xl font-black text-[#0B1F3B]">
                 {t.tabStudy}
               </h1>
@@ -443,7 +480,25 @@ export function App() {
         </div>
       )}
 
-      {/* SCREEN 3: MANAGE */}
+      {/* SCREEN 3: USEFUL PHRASES */}
+      {screen === 'phrases' && (
+        <PhrasesScreen
+          phrases={phrases}
+          phraseCategories={phraseCategories}
+          starredIds={starredIds}
+          masteredIds={masteredIds}
+          onToggleStar={handleToggleStar}
+          onToggleMastered={handleToggleMastered}
+          onSpeak={speak}
+          isSpeaking={isSpeaking}
+          rate={rate}
+          setRate={setRate}
+          toggleLang={toggleLang}
+          t={t}
+        />
+      )}
+
+      {/* SCREEN 4: MANAGE */}
       {screen === 'manage' && (
         <ManageScreen
           vocabulary={vocabulary}
@@ -454,7 +509,7 @@ export function App() {
         />
       )}
 
-      {/* Fixed Bottom Navigation Bar */}
+      {/* Fixed Bottom Navigation Bar (4 Tabs) */}
       <Navbar currentScreen={screen} onSelectScreen={setScreen} t={t} />
 
       {/* PIN Verification Modal (2026 PIN) */}
@@ -469,7 +524,7 @@ export function App() {
         t={t}
       />
 
-      {/* Card Manager Modal (Add, Edit, Delete Cards & Categories) */}
+      {/* Card Manager Modal */}
       <CardManagerModal
         isOpen={isCardManagerOpen}
         onClose={() => setIsCardManagerOpen(false)}
