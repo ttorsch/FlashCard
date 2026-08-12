@@ -1,5 +1,12 @@
 import React, { useState, useRef } from 'react';
-import { Star, Check, Play, Volume1, Globe, Lightbulb } from 'lucide-react';
+import {
+  Star,
+  Check,
+  Play,
+  Volume2,
+  Lightbulb,
+  Globe
+} from 'lucide-react';
 import type { SurfPhrase } from '../data/surfPhrases';
 import type { TranslationKeys } from '../data/translations';
 import { ControlPanel } from './ControlPanel';
@@ -101,6 +108,32 @@ export const PhrasesScreen: React.FC<PhrasesScreenProps> = ({
     }
   };
 
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.targetTouches[0].clientX;
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    touchEndX.current = e.targetTouches[0].clientX;
+  };
+
+  const handleTouchEnd = () => {
+    if (!touchStartX.current || !touchEndX.current) return;
+    const distance = touchStartX.current - touchEndX.current;
+    const isLeftSwipe = distance > minSwipeDistance;
+    const isRightSwipe = distance < -minSwipeDistance;
+
+    if (isLeftSwipe) {
+      triggerHaptic();
+      handleNext();
+    } else if (isRightSwipe) {
+      triggerHaptic();
+      handlePrev();
+    }
+
+    touchStartX.current = null;
+    touchEndX.current = null;
+  };
+
   const progressPct =
     filteredPhrases.length > 0 ? Math.round(((currentIndex + 1) / filteredPhrases.length) * 100) : 0;
 
@@ -111,10 +144,8 @@ export const PhrasesScreen: React.FC<PhrasesScreenProps> = ({
       {/* Top Header Bar */}
       <div className="flex items-center justify-between gap-2">
         <div className="flex flex-col gap-0.5">
-          <span className="lb-micro">SURF THAI PHRASES</span>
-          <h1 className="text-xl font-black text-[#0B1F3B]">
-            {t.phrasesTitle}
-          </h1>
+          <span className="lb-micro">SURF ENGLISH PHRASES</span>
+          <h1 className="text-xl font-black text-[#0B1F3B]">{t.tabPhrases}</h1>
         </div>
 
         <button
@@ -126,36 +157,26 @@ export const PhrasesScreen: React.FC<PhrasesScreenProps> = ({
         </button>
       </div>
 
-      {/* Category Filter Chips */}
-      <div className="flex items-center gap-2 overflow-x-auto py-1 scrollbar-none no-select snap-x">
+      {/* Category Pills */}
+      <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1">
         {allCategoryList.map((cat) => {
-          const isSelected = selectedCategory === cat;
-          const count =
-            cat === 'All Phrases' ? phrases.length : phrases.filter((p) => p.category === cat).length;
-          const label = cat === 'All Phrases' ? t.allPhrasesCategories : cat;
-
+          const isActive = selectedCategory === cat;
           return (
             <button
               key={cat}
               onClick={() => {
+                triggerHaptic();
                 setSelectedCategory(cat);
                 setCurrentIndex(0);
                 setIsFlipped(false);
               }}
-              className={`snap-start whitespace-nowrap min-h-[38px] flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all duration-200 cursor-pointer active-push border ${
-                isSelected
-                  ? 'bg-[#0B1F3B] text-white border-[#0B1F3B] shadow-sm'
-                  : 'bg-white text-[#0B1F3B]/70 border-[#0B1F3B]/12 hover:border-[#0B1F3B]/30'
+              className={`px-3.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all active-push cursor-pointer shrink-0 ${
+                isActive
+                  ? 'bg-[#0B1F3B] text-white shadow-xs'
+                  : 'bg-white text-[#0B1F3B]/70 border border-[#0B1F3B]/12 hover:border-[#EB6F43]/40'
               }`}
             >
-              <span>{label}</span>
-              <span
-                className={`ml-0.5 px-1.5 py-0.2 text-[10px] rounded-md font-mono ${
-                  isSelected ? 'bg-white/20 text-white' : 'bg-[#F6F1EA] text-[#0B1F3B]/60'
-                }`}
-              >
-                {count}
-              </span>
+              {cat}
             </button>
           );
         })}
@@ -176,172 +197,191 @@ export const PhrasesScreen: React.FC<PhrasesScreenProps> = ({
       </div>
 
       {/* Main Phrase Card */}
-      <main className="my-1 no-select">
+      <main className="my-1">
         {currentPhrase ? (
-          <div
-            className="perspective-1000 w-full"
-            onTouchStart={(e) => {
-              touchStartX.current = e.targetTouches[0].clientX;
-            }}
-            onTouchMove={(e) => {
-              touchEndX.current = e.targetTouches[0].clientX;
-            }}
-            onTouchEnd={() => {
-              if (!touchStartX.current || !touchEndX.current) return;
-              const distance = touchStartX.current - touchEndX.current;
-              if (distance > minSwipeDistance) handleNext();
-              else if (distance < -minSwipeDistance) handlePrev();
-              touchStartX.current = null;
-              touchEndX.current = null;
-            }}
-          >
+          <div className="w-full max-w-md mx-auto no-select">
             <div
-              onClick={() => setIsFlipped((prev) => !prev)}
-              className={`relative w-full min-h-[420px] rounded-[28px] transition-transform duration-700 transform-style-3d cursor-pointer shadow-xl ${
-                isFlipped ? 'rotate-y-180' : ''
-              }`}
-              style={{
-                WebkitTransformStyle: 'preserve-3d',
-                transformStyle: 'preserve-3d'
-              }}
+              className="perspective-1000 w-full"
+              onTouchStart={handleTouchStart}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
             >
-              {/* FRONT SIDE (White Card) */}
               <div
-                className={`absolute inset-0 w-full h-full rounded-[28px] p-6 glass-card-front flex flex-col justify-between overflow-hidden bg-white border border-[#0B1F3B]/12 transition-opacity duration-300 ${
-                  isFlipped ? 'opacity-0 pointer-events-none invisible' : 'opacity-100 z-10 visible'
+                onClick={() => {
+                  triggerHaptic();
+                  setIsFlipped((prev) => !prev);
+                }}
+                className={`relative w-full min-h-[420px] rounded-[28px] transition-transform duration-700 transform-style-3d cursor-pointer shadow-xl ${
+                  isFlipped ? 'rotate-y-180' : ''
                 }`}
                 style={{
-                  WebkitBackfaceVisibility: 'hidden',
-                  backfaceVisibility: 'hidden',
-                  transform: 'rotateY(0deg) translateZ(1px)',
-                  WebkitTransform: 'rotateY(0deg) translateZ(1px)'
+                  WebkitTransformStyle: 'preserve-3d',
+                  transformStyle: 'preserve-3d'
                 }}
               >
-                <div className="flex items-center justify-between z-10">
-                  <span className="px-3 py-1 text-xs font-bold rounded-full bg-[#F6F1EA] text-[#0B1F3B]/80 border border-[#0B1F3B]/10 truncate max-w-[60%]">
-                    {currentPhrase.category}
-                  </span>
+                {/* FRONT SIDE (White Card) */}
+                <div
+                  className={`absolute inset-0 w-full h-full rounded-[28px] p-6 glass-card-front flex flex-col justify-between overflow-hidden bg-white border border-[#0B1F3B]/12 transition-opacity duration-300 ${
+                    isFlipped ? 'opacity-0 pointer-events-none invisible' : 'opacity-100 z-10 visible'
+                  }`}
+                  style={{
+                    WebkitBackfaceVisibility: 'hidden',
+                    backfaceVisibility: 'hidden',
+                    transform: 'rotateY(0deg) translateZ(1px)',
+                    WebkitTransform: 'rotateY(0deg) translateZ(1px)'
+                  }}
+                >
+                  <div className="flex items-center justify-between z-10">
+                    <span className="px-3 py-1 text-xs font-bold rounded-full bg-[#F6F1EA] text-[#0B1F3B]/80 border border-[#0B1F3B]/10 truncate max-w-[60%]">
+                      {currentPhrase.category}
+                    </span>
 
-                  <div className="flex items-center gap-2 shrink-0">
+                    <div className="flex items-center gap-2 shrink-0">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          triggerHaptic();
+                          onToggleStar(currentPhrase.id);
+                        }}
+                        className={`w-9 h-9 rounded-full border flex items-center justify-center transition-all active-push ${
+                          starredIds.includes(currentPhrase.id)
+                            ? 'bg-[#EB6F43] border-[#EB6F43] text-white shadow-sm'
+                            : 'bg-transparent border-[#0B1F3B]/15 text-[#0B1F3B]/40 hover:text-[#EB6F43]'
+                        }`}
+                      >
+                        <Star className={`w-4 h-4 ${starredIds.includes(currentPhrase.id) ? 'fill-white text-white' : ''}`} />
+                      </button>
+
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          triggerHaptic();
+                          onToggleMastered(currentPhrase.id);
+                        }}
+                        className={`w-9 h-9 rounded-full border flex items-center justify-center transition-all active-push ${
+                          masteredIds.includes(currentPhrase.id)
+                            ? 'bg-[#0B1F3B] border-[#0B1F3B] text-white shadow-sm'
+                            : 'bg-transparent border-[#0B1F3B]/15 text-[#0B1F3B]/40 hover:text-[#0B1F3B]'
+                        }`}
+                      >
+                        <Check className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="my-auto text-center py-4 z-10 flex flex-col items-center justify-center gap-3">
+                    <span className="lb-micro tracking-widest">{t.englishPhraseBadge}</span>
+                    <h2 className="text-2xl sm:text-3xl font-bold text-[#0B1F3B] leading-snug px-2">
+                      "{currentPhrase.english}"
+                    </h2>
+
+                    {/* Audio Listen Button */}
                     <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onToggleStar(currentPhrase.id);
-                      }}
-                      className={`w-9 h-9 rounded-full border flex items-center justify-center transition-all active-push ${
-                        starredIds.includes(currentPhrase.id)
-                          ? 'bg-[#EB6F43] border-[#EB6F43] text-white shadow-sm'
-                          : 'bg-transparent border-[#0B1F3B]/15 text-[#0B1F3B]/40 hover:text-[#EB6F43]'
+                      onClick={handleAudioClick}
+                      className={`mt-1 inline-flex items-center gap-2 px-5 py-2.5 rounded-full font-bold text-xs transition-all shadow-md active-push ${
+                        isSpeaking
+                          ? 'bg-[#EB6F43] text-white scale-105 animate-pulse'
+                          : 'bg-[#EB6F43] text-white hover:bg-[#D85F35]'
                       }`}
                     >
-                      <Star className={`w-4 h-4 ${starredIds.includes(currentPhrase.id) ? 'fill-white text-white' : ''}`} />
+                      {isSpeaking ? (
+                        <>
+                          <Volume2 className="w-4 h-4 animate-bounce text-white" />
+                          <span>{t.speaking}</span>
+                        </>
+                      ) : (
+                        <>
+                          <Play className="w-3.5 h-3.5 fill-white text-white" />
+                          <span>{t.listenAudio}</span>
+                        </>
+                      )}
                     </button>
 
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onToggleMastered(currentPhrase.id);
-                      }}
-                      className={`w-9 h-9 rounded-full border flex items-center justify-center transition-all active-push ${
-                        masteredIds.includes(currentPhrase.id)
-                          ? 'bg-[#0B1F3B] border-[#0B1F3B] text-white shadow-sm'
-                          : 'bg-transparent border-[#0B1F3B]/15 text-[#0B1F3B]/40 hover:text-[#0B1F3B]'
-                      }`}
-                    >
-                      <Check className="w-4 h-4" />
-                    </button>
+                    {/* 0.5x, 0.8x, 1.0x Speed Pills */}
+                    <div className="flex items-center gap-1.5 mt-1">
+                      <span className="text-[11px] font-bold text-[#0B1F3B]/60">{t.speed}:</span>
+                      {[0.5, 0.8, 1.0].map((s) => (
+                        <button
+                          key={s}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            triggerHaptic();
+                            setRate(s);
+                          }}
+                          className={`px-2.5 py-0.5 rounded-full text-[11px] font-mono font-bold transition-all cursor-pointer ${
+                            rate === s
+                              ? 'bg-[#EB6F43] text-white shadow-xs'
+                              : 'bg-[#F6F1EA] text-[#0B1F3B]/70 border border-[#0B1F3B]/10 hover:border-[#EB6F43]'
+                          }`}
+                        >
+                          {s}x
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="text-center text-xs text-[#0B1F3B]/45 font-medium z-10">
+                    {t.tapToFlip}
                   </div>
                 </div>
 
-                <div className="my-auto text-center py-4 z-10 flex flex-col items-center justify-center gap-4">
-                  <span className="lb-micro tracking-widest">{t.englishPhraseBadge}</span>
-                  <h2 className="text-2xl sm:text-3xl font-bold text-[#0B1F3B] leading-snug px-2">
-                    "{currentPhrase.english}"
-                  </h2>
+                {/* BACK SIDE (Dark Navy Card) */}
+                <div
+                  className={`absolute inset-0 w-full h-full rounded-[28px] p-6 glass-card-back flex flex-col justify-between overflow-hidden bg-[#0B1F3B] text-white transition-opacity duration-300 ${
+                    isFlipped ? 'opacity-100 z-10 visible' : 'opacity-0 pointer-events-none invisible'
+                  }`}
+                  style={{
+                    WebkitBackfaceVisibility: 'hidden',
+                    backfaceVisibility: 'hidden',
+                    transform: 'rotateY(180deg) translateZ(1px)',
+                    WebkitTransform: 'rotateY(180deg) translateZ(1px)'
+                  }}
+                >
+                  <div className="flex items-center justify-between z-10">
+                    <span className="px-3.5 py-1 text-xs font-semibold rounded-full bg-[#EB6F43] text-white">
+                      {t.thaiTranslationBadge}
+                    </span>
 
-                  <button
-                    onClick={handleAudioClick}
-                    className={`mt-2 inline-flex items-center gap-2 px-5 py-2.5 rounded-full font-bold text-xs transition-all shadow-md active-push ${
-                      isSpeaking
-                        ? 'bg-[#EB6F43] text-white scale-105 animate-pulse'
-                        : 'bg-[#EB6F43] text-white hover:bg-[#D85F35]'
-                    }`}
-                  >
-                    {isSpeaking ? (
-                      <>
-                        <Volume1 className="w-4 h-4 animate-spin text-white" />
-                        <span>{t.speaking}</span>
-                      </>
-                    ) : (
-                      <>
-                        <Play className="w-3.5 h-3.5 fill-white text-white" />
-                        <span>{t.listenAudio}</span>
-                      </>
+                    <button
+                      onClick={handleAudioClick}
+                      className="w-9 h-9 rounded-full bg-white/15 text-white flex items-center justify-center active-push hover:bg-white/25 transition-all"
+                    >
+                      <Play className="w-3.5 h-3.5 fill-white text-white" />
+                    </button>
+                  </div>
+
+                  <div className="my-auto py-2 z-10 flex flex-col gap-4">
+                    {/* Thai Meaning */}
+                    <div className="flex flex-col gap-1">
+                      <span className="lb-micro text-white/50">{t.thaiMeaningHeader}</span>
+                      <h3 className="text-xl sm:text-2xl font-bold text-white leading-snug">
+                        {currentPhrase.thaiMeaning}
+                      </h3>
+                    </div>
+
+                    {/* Thai Phonetics */}
+                    {currentPhrase.thaiPhonetic && (
+                      <div className="border-t border-white/14 pt-3 flex flex-col gap-1">
+                        <span className="lb-micro text-[#EB6F43] font-bold">THAI PHONETIC (คำอ่านออกเสียง)</span>
+                        <p className="text-base sm:text-lg font-semibold text-white font-mono">
+                          {currentPhrase.thaiPhonetic}
+                        </p>
+                      </div>
                     )}
-                  </button>
-                </div>
 
-                <div className="text-center text-xs text-[#0B1F3B]/45 font-medium z-10">
-                  {t.tapToFlip}
-                </div>
-              </div>
-
-              {/* BACK SIDE (Midnight Navy Card) */}
-              <div
-                className={`absolute inset-0 w-full h-full rounded-[28px] p-6 glass-card-back flex flex-col justify-between overflow-hidden bg-[#0B1F3B] text-white transition-opacity duration-300 ${
-                  isFlipped ? 'opacity-100 z-10 visible' : 'opacity-0 pointer-events-none invisible'
-                }`}
-                style={{
-                  WebkitBackfaceVisibility: 'hidden',
-                  backfaceVisibility: 'hidden',
-                  transform: 'rotateY(180deg) translateZ(1px)',
-                  WebkitTransform: 'rotateY(180deg) translateZ(1px)'
-                }}
-              >
-                <div className="flex items-center justify-between z-10">
-                  <span className="px-3.5 py-1 text-xs font-semibold rounded-full bg-[#EB6F43] text-white">
-                    {t.thaiTranslationBadge}
-                  </span>
-
-                  <button
-                    onClick={handleAudioClick}
-                    className="w-9 h-9 rounded-full bg-white/15 text-white flex items-center justify-center active-push hover:bg-white/25 transition-all"
-                  >
-                    <Play className="w-3.5 h-3.5 fill-white text-white" />
-                  </button>
-                </div>
-
-                <div className="my-auto py-2 z-10 flex flex-col gap-4">
-                  {/* Thai Meaning */}
-                  <div className="flex flex-col gap-1">
-                    <span className="lb-micro text-white/50">{t.thaiMeaningHeader}</span>
-                    <h3 className="text-xl sm:text-2xl font-bold text-white leading-snug">
-                      {currentPhrase.thaiMeaning}
-                    </h3>
+                    {/* Context / Coaching Tip */}
+                    {currentPhrase.context && (
+                      <div className="border-t border-white/14 pt-3 flex flex-col gap-1">
+                        <span className="lb-micro text-white/50 flex items-center gap-1">
+                          <Lightbulb className="w-3.5 h-3.5 text-[#EB6F43]" />
+                          {t.contextTipHeader}
+                        </span>
+                        <p className="text-xs sm:text-sm text-white/85 leading-relaxed">
+                          {currentPhrase.context}
+                        </p>
+                      </div>
+                    )}
                   </div>
-
-                  {/* Thai Phonetics */}
-                  {currentPhrase.thaiPhonetic && (
-                    <div className="border-t border-white/14 pt-3 flex flex-col gap-1">
-                      <span className="lb-micro text-[#EB6F43] font-bold">THAI PHONETIC (คำอ่านออกเสียง)</span>
-                      <p className="text-base sm:text-lg font-semibold text-white font-mono">
-                        {currentPhrase.thaiPhonetic}
-                      </p>
-                    </div>
-                  )}
-
-                  {/* Context / Coaching Tip */}
-                  {currentPhrase.context && (
-                    <div className="border-t border-white/14 pt-3 flex flex-col gap-1">
-                      <span className="lb-micro text-white/50 flex items-center gap-1">
-                        <Lightbulb className="w-3.5 h-3.5 text-[#EB6F43]" />
-                        {t.contextTipHeader}
-                      </span>
-                      <p className="text-xs sm:text-sm text-white/85 leading-relaxed">
-                        {currentPhrase.context}
-                      </p>
-                    </div>
-                  )}
                 </div>
               </div>
             </div>

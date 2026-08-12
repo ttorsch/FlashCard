@@ -1,5 +1,5 @@
 import React, { useRef } from 'react';
-import { Star, Check, Play, Volume1 } from 'lucide-react';
+import { Star, Check, Play, Volume2 } from 'lucide-react';
 import type { SurfVocabulary } from '../data/surfVocabulary';
 import type { TranslationKeys } from '../data/translations';
 
@@ -80,10 +80,18 @@ export const Flashcard: React.FC<FlashcardProps> = ({
     onFlip();
   };
 
+  // Speaks ONLY the vocabulary word
   const handleAudioClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     triggerHaptic();
-    onSpeak(card.audioText || card.english);
+    onSpeak(card.english);
+  };
+
+  // Speaks ONLY the example sentence
+  const handleExampleAudioClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    triggerHaptic();
+    onSpeak(card.example);
   };
 
   const handleStarClick = (e: React.MouseEvent) => {
@@ -190,7 +198,7 @@ export const Flashcard: React.FC<FlashcardProps> = ({
               >
                 {isSpeaking ? (
                   <>
-                    <Volume1 className="w-4 h-4 animate-spin text-white" />
+                    <Volume2 className="w-4 h-4 animate-bounce text-white" />
                     <span>{t.speaking}</span>
                   </>
                 ) : (
@@ -255,10 +263,20 @@ export const Flashcard: React.FC<FlashcardProps> = ({
                 </div>
               )}
 
-              {/* Example Sentence */}
+              {/* Example Sentence with Dedicated Pronounce Button */}
               {card.example && (
-                <div className="border-t border-white/14 pt-3 flex flex-col gap-1">
-                  <span className="lb-micro text-white/50">EXAMPLE</span>
+                <div className="border-t border-white/14 pt-3 flex flex-col gap-1.5">
+                  <div className="flex items-center justify-between">
+                    <span className="lb-micro text-white/50">EXAMPLE</span>
+                    <button
+                      onClick={handleExampleAudioClick}
+                      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/15 hover:bg-white/25 text-white font-bold text-[11px] transition-all cursor-pointer active-push"
+                      title="Pronounce example sentence"
+                    >
+                      <Volume2 className="w-3.5 h-3.5 text-[#EB6F43]" />
+                      <span>ฟังตัวอย่าง</span>
+                    </button>
+                  </div>
                   <p className="text-xs sm:text-sm text-white/85 italic leading-relaxed">
                     "{card.example}"
                   </p>

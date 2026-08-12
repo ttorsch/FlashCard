@@ -47,12 +47,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
     onShuffle();
   };
 
-  const handleRateToggle = () => {
-    triggerHaptic();
-    if (rate === 1.0) setRate(1.2);
-    else if (rate === 1.2) setRate(1.5);
-    else setRate(1.0);
-  };
+  const speeds = [0.5, 0.8, 1.0];
 
   return (
     <div className="w-full max-w-md mx-auto px-4 my-2 no-select">
@@ -93,15 +88,32 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
           </button>
         </div>
 
-        {/* Audio Speed Rate & Swipe Hint */}
+        {/* Audio Speed Selector (0.5x, 0.8x, 1.0x) & Swipe Notice */}
         <div className="flex items-center justify-between px-1 text-xs text-[#0B1F3B]/60 font-semibold">
-          <button
-            onClick={handleRateToggle}
-            className="flex items-center gap-1.5 py-1 text-[#0B1F3B]/70 hover:text-[#0B1F3B] active-push transition-colors cursor-pointer"
-          >
-            <span>{t.speed}</span>
-            <strong className="text-[#EB6F43] font-mono font-bold">{rate.toFixed(1)}x</strong>
-          </button>
+          <div className="flex items-center gap-1.5">
+            <span className="text-[#0B1F3B]/60">{t.speed}:</span>
+            <div className="flex items-center gap-1">
+              {speeds.map((s) => {
+                const isActive = rate === s;
+                return (
+                  <button
+                    key={s}
+                    onClick={() => {
+                      triggerHaptic();
+                      setRate(s);
+                    }}
+                    className={`px-2.5 py-1 rounded-full text-[11px] font-mono font-bold transition-all cursor-pointer ${
+                      isActive
+                        ? 'bg-[#EB6F43] text-white shadow-xs'
+                        : 'bg-white text-[#0B1F3B]/70 border border-[#0B1F3B]/15 hover:border-[#EB6F43]'
+                    }`}
+                  >
+                    {s}x
+                  </button>
+                );
+              })}
+            </div>
+          </div>
 
           <span className="lb-caption text-[11px]">{t.swipeNotice}</span>
         </div>
