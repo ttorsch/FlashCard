@@ -1,15 +1,16 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 
 const DEFAULT_API_KEY = 'sk_a94d385d4d9c20169d80025a3593d71275974e691fae7518';
-const JOSH_VOICE_ID = 'TxGEqnHWrfWFTfGW9XjX'; // Josh - ElevenLabs Voice ID
+// Built-in American Male ElevenLabs voice (100% Free & 200 OK)
+const AMERICAN_MALE_VOICE_ID = 'bIHbv24MWmeRgasZH58o'; // Will - Relaxed Optimist American Male Voice
 
 export function useSpeech() {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [rate, setRate] = useState<number>(1.0);
 
-  // ElevenLabs State initialized with default API Key and Josh Voice ID
+  // ElevenLabs State initialized with default API Key and Will (American Male) Voice ID
   const [apiKey] = useState<string>(DEFAULT_API_KEY);
-  const [voiceId] = useState<string>(JOSH_VOICE_ID);
+  const [voiceId] = useState<string>(AMERICAN_MALE_VOICE_ID);
 
   // Web Speech Fallback State
   const synthRef = useRef<SpeechSynthesis | null>(null);
@@ -18,6 +19,15 @@ export function useSpeech() {
   // Audio Playback & Quota Cache Ref
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const cacheRef = useRef<Map<string, string>>(new Map());
+
+  // Auto-purge any invalid legacy voice ID stored in localStorage
+  useEffect(() => {
+    try {
+      localStorage.removeItem('surf_flashcard_elevenlabs_voice');
+    } catch {
+      // Ignore storage errors
+    }
+  }, []);
 
   // Initialize Web Speech API Fallback
   useEffect(() => {
@@ -32,8 +42,8 @@ export function useSpeech() {
         const preferred =
           englishVoices.find(
             (v) =>
-              v.name.includes('Daniel') ||
               v.name.includes('Alex') ||
+              v.name.includes('Daniel') ||
               v.name.includes('Google') ||
               v.name.includes('Natural') ||
               v.name.includes('Samantha')
@@ -88,7 +98,7 @@ export function useSpeech() {
     [rate, selectedWebVoice]
   );
 
-  // Main Speak Function (ElevenLabs API using Josh with session cache & WebSpeech fallback)
+  // Main Speak Function (ElevenLabs API using Will - American Male with session cache & WebSpeech fallback)
   const speak = useCallback(
     async (text: string) => {
       stop();
@@ -113,7 +123,7 @@ export function useSpeech() {
         return;
       }
 
-      // Call ElevenLabs Text-to-Speech API (Josh)
+      // Call ElevenLabs Text-to-Speech API (Will - American Male)
       try {
         setIsSpeaking(true);
         const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
