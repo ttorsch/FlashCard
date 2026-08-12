@@ -52,7 +52,7 @@ export const CardManagerModal: React.FC<CardManagerModalProps> = ({
 
   // Vocab State
   const [editingCard, setEditingCard] = useState<SurfVocabulary | null>(null);
-  const [cardCategory, setCardCategory] = useState<string>(categories[0] || 'Introduce Myself');
+  const [cardCategory, setCardCategory] = useState<string>((categories && categories[0]) || 'Introduce Myself');
   const [english, setEnglish] = useState('');
   const [thaiMeaning, setThaiMeaning] = useState('');
   const [thaiPhonetic, setThaiPhonetic] = useState('');
@@ -62,7 +62,7 @@ export const CardManagerModal: React.FC<CardManagerModalProps> = ({
 
   // Phrase State
   const [editingPhrase, setEditingPhrase] = useState<SurfPhrase | null>(null);
-  const [phraseCategory, setPhraseCategory] = useState<string>(phraseCategories[0] || 'Introduce Myself');
+  const [phraseCategory, setPhraseCategory] = useState<string>((phraseCategories && phraseCategories[0]) || 'Introduce Myself');
   const [phraseEnglish, setPhraseEnglish] = useState('');
   const [phraseThaiMeaning, setPhraseThaiMeaning] = useState('');
   const [phraseThaiPhonetic, setPhraseThaiPhonetic] = useState('');

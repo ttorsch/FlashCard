@@ -19,6 +19,7 @@ import { PinModal } from './components/PinModal';
 import { CardManagerModal } from './components/CardManagerModal';
 
 import { useSpeech } from './hooks/useSpeech';
+import { useSupabaseSync } from './hooks/useSupabaseSync';
 import { BookMarked, RefreshCcw, Globe } from 'lucide-react';
 
 export function App() {
@@ -48,26 +49,38 @@ export function App() {
     }
   }, [lang]);
 
-  // Auto-purge legacy localStorage keys on mount
-  useEffect(() => {
-    try {
-      localStorage.removeItem('surf_flashcard_custom_vocabulary');
-      localStorage.removeItem('surf_flashcard_categories');
-      localStorage.removeItem('surf_flashcard_v2_vocabulary');
-      localStorage.removeItem('surf_flashcard_v2_phrases');
-    } catch {
-      // Ignore storage errors
-    }
-  }, []);
-
-  // Vocabulary State
-  const [vocabulary, setVocabulary] = useState<SurfVocabulary[]>(() => {
+  // Initial datasets from local storage or defaults
+  const initialVocabulary = useMemo(() => {
     try {
       const saved = localStorage.getItem('surf_flashcard_v3_vocabulary');
       return saved ? JSON.parse(saved) : SURF_VOCABULARY;
     } catch {
       return SURF_VOCABULARY;
     }
+  }, []);
+
+  const initialPhrases = useMemo(() => {
+    try {
+      const saved = localStorage.getItem('surf_flashcard_v3_phrases');
+      return saved ? JSON.parse(saved) : SURF_PHRASES;
+    } catch {
+      return SURF_PHRASES;
+    }
+  }, []);
+
+  // Supabase Real-time Cloud Synchronization Hook
+  const {
+    vocabulary,
+    phrases,
+    addCard: handleAddCard,
+    editCard: handleEditCard,
+    deleteCard: handleDeleteCard,
+    addPhrase: handleAddPhrase,
+    editPhrase: handleEditPhrase,
+    deletePhrase: handleDeletePhrase
+  } = useSupabaseSync({
+    initialVocabulary,
+    initialPhrases
   });
 
   const [categories, setCategories] = useState<string[]>(() => {
@@ -76,16 +89,6 @@ export function App() {
       return saved ? JSON.parse(saved) : DEFAULT_CATEGORIES;
     } catch {
       return DEFAULT_CATEGORIES;
-    }
-  });
-
-  // Useful Phrases State
-  const [phrases, setPhrases] = useState<SurfPhrase[]>(() => {
-    try {
-      const saved = localStorage.getItem('surf_flashcard_v3_phrases');
-      return saved ? JSON.parse(saved) : SURF_PHRASES;
-    } catch {
-      return SURF_PHRASES;
     }
   });
 
@@ -133,12 +136,12 @@ export function App() {
 
   const { speak, stop, isSpeaking, rate, setRate } = useSpeech();
 
-  // Storage Effects (v3 Keys)
+  // Backup Storage Effects (v3 Keys)
   useEffect(() => {
     try {
       localStorage.setItem('surf_flashcard_v3_vocabulary', JSON.stringify(vocabulary));
     } catch (e) {
-      console.error('Failed to save vocabulary', e);
+      console.error('Failed to save vocabulary backup', e);
     }
   }, [vocabulary]);
 
@@ -146,7 +149,7 @@ export function App() {
     try {
       localStorage.setItem('surf_flashcard_v3_phrases', JSON.stringify(phrases));
     } catch (e) {
-      console.error('Failed to save phrases', e);
+      console.error('Failed to save phrases backup', e);
     }
   }, [phrases]);
 
@@ -174,53 +177,11 @@ export function App() {
     }
   }, [masteredIds]);
 
-  // Card Management Handlers
-  const handleAddCard = useCallback((newCardData: Omit<SurfVocabulary, 'id'>) => {
-    const newCard: SurfVocabulary = {
-      ...newCardData,
-      id: `surf-custom-${Date.now()}`
-    };
-    setVocabulary((prev) => [newCard, ...prev]);
-  }, []);
-
-  const handleEditCard = useCallback((updatedCard: SurfVocabulary) => {
-    setVocabulary((prev) => prev.map((card) => (card.id === updatedCard.id ? updatedCard : card)));
-  }, []);
-
-  const handleDeleteCard = useCallback((id: string) => {
-    setVocabulary((prev) => prev.filter((card) => card.id !== id));
-    setStarredIds((prev) => prev.filter((item) => item !== id));
-    setMasteredIds((prev) => prev.filter((item) => item !== id));
-  }, []);
-
-  // Phrase Management Handlers
-  const handleAddPhrase = useCallback((newPhraseData: Omit<SurfPhrase, 'id'>) => {
-    const newPhrase: SurfPhrase = {
-      ...newPhraseData,
-      id: `phrase-custom-${Date.now()}`
-    };
-    setPhrases((prev) => [newPhrase, ...prev]);
-  }, []);
-
-  const handleEditPhrase = useCallback((updatedPhrase: SurfPhrase) => {
-    setPhrases((prev) => prev.map((phrase) => (phrase.id === updatedPhrase.id ? updatedPhrase : phrase)));
-  }, []);
-
-  const handleDeletePhrase = useCallback((id: string) => {
-    setPhrases((prev) => prev.filter((phrase) => phrase.id !== id));
-    setStarredIds((prev) => prev.filter((item) => item !== id));
-    setMasteredIds((prev) => prev.filter((item) => item !== id));
-  }, []);
-
   const handleResetVocabulary = useCallback(() => {
-    setVocabulary(SURF_VOCABULARY);
     setCategories(DEFAULT_CATEGORIES);
-    setPhrases(SURF_PHRASES);
-    localStorage.removeItem('surf_flashcard_v2_vocabulary');
-    localStorage.removeItem('surf_flashcard_v2_categories');
-    localStorage.removeItem('surf_flashcard_v2_phrases');
-    localStorage.removeItem('surf_flashcard_custom_vocabulary');
-    localStorage.removeItem('surf_flashcard_categories');
+    localStorage.removeItem('surf_flashcard_v3_vocabulary');
+    localStorage.removeItem('surf_flashcard_v3_categories');
+    localStorage.removeItem('surf_flashcard_v3_phrases');
   }, []);
 
   // Category Handlers
@@ -234,14 +195,6 @@ export function App() {
   const handleDeleteCategory = useCallback((catToDelete: string) => {
     setCategories((prev) => {
       const remaining = prev.filter((c) => c !== catToDelete);
-      const fallbackCat = remaining[0] || 'General';
-
-      setVocabulary((prevVocab) =>
-        prevVocab.map((card) =>
-          card.category === catToDelete ? { ...card, category: fallbackCat } : card
-        )
-      );
-
       return remaining;
     });
 
