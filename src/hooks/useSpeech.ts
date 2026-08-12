@@ -1,15 +1,15 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 
 const DEFAULT_API_KEY = 'sk_a94d385d4d9c20169d80025a3593d71275974e691fae7518';
-const DEREK_VOICE_ID = '48PZ3DWeaUaOsuopUYms'; // Derek - ElevenLabs Studio Voice
+const JOSH_VOICE_ID = 'TxGEqnHWrfWFTfGW9XjX'; // Josh - ElevenLabs Voice ID
 
 export function useSpeech() {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [rate, setRate] = useState<number>(1.0);
 
-  // ElevenLabs State initialized with default API Key and Derek's Voice ID
+  // ElevenLabs State initialized with default API Key and Josh Voice ID
   const [apiKey] = useState<string>(DEFAULT_API_KEY);
-  const [voiceId] = useState<string>(DEREK_VOICE_ID);
+  const [voiceId] = useState<string>(JOSH_VOICE_ID);
 
   // Web Speech Fallback State
   const synthRef = useRef<SpeechSynthesis | null>(null);
@@ -88,7 +88,7 @@ export function useSpeech() {
     [rate, selectedWebVoice]
   );
 
-  // Main Speak Function (ElevenLabs API using Derek's voice with session cache & WebSpeech fallback)
+  // Main Speak Function (ElevenLabs API using Josh with session cache & WebSpeech fallback)
   const speak = useCallback(
     async (text: string) => {
       stop();
@@ -113,7 +113,7 @@ export function useSpeech() {
         return;
       }
 
-      // Call ElevenLabs Text-to-Speech API (Derek Voice)
+      // Call ElevenLabs Text-to-Speech API (Josh)
       try {
         setIsSpeaking(true);
         const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
